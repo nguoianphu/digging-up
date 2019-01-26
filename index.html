@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="author" content="Dickson Chui">
+  <title>Extra Laser | Extra Parts, Extra Credit</title>
+  <link rel="icon" href="assets/icon196.png">
+  <link rel="stylesheet" type="text/css" href="styles/css/styles.css">
+  <style>
+    .overlay {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      pointer-events: none;
+      font-size: 2vh;
+    }
+
+    .overlay .fullscreenButton {
+      display: block;
+      position: absolute;
+      top: 50%;
+      right: 0;
+      transform: translate();
+      pointer-events: auto;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- <h1>phaser3-typescript</h1> -->
+    <div id="game">
+      <div class="overlay">
+        <a class="fullscreenButton" href="javascript: void 0">fullscreen</a>
+      </div>
+    </div>
+  </div>
+  <script src="build/bundle.js?v=1"></script>
+  <script>
+    document.querySelector('.fullscreenButton').addEventListener('click', () => {
+        const fullscreenName = scene.sys.game.device.fullscreen.request;
+        if (fullscreenName) {
+            return document.querySelector('.container')[fullscreenName]();
+        }
+    })
+  </script>
+</body>
+
+</html>

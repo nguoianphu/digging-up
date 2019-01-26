@@ -1,0 +1,24 @@
+@font-face {
+    font-family: "Connection";
+    src: url("../../assets/font/Connection.ttf") format("truetype");
+  }
+  body {
+    font-size: 10px;
+    color: #000000;
+    background-color: #ffffff;
+    margin: 0;
+    overflow: hidden;
+  }
+  body div.container {
+    text-align: center;
+    overflow: hidden;
+  }
+  body div.container h1 {
+    font-family: "Connection", cursive;
+    padding: 0;
+    font-size: 50px;
+  }
+  body div.container div#game {
+    display: block;
+  }
+  

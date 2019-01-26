@@ -7,12 +7,14 @@ import { MainScene } from "./scenes/mainScene";
 
 // main game configuration
 const config: GameConfig = {
-    width: 16 * 10 * 5,
-    height: 16 * 10 * 8,
+    width: 128 * 5,
+    height: 128 * 8,
     disableContextMenu: true,
     type: Phaser.AUTO,
     parent: "game",
     scene: MainScene,
+    zoom: 1,
+    pixelArt: true,
     // physics: {
     //     default: "matter",
     //     matter: {

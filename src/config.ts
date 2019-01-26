@@ -1,8 +1,16 @@
 
 
 export type IConfig = {
+    spriteWidth: number,
+    spriteHeight: number,
+    blockMap: number[][],
+    blocks: { [x: string]: IBlockDef }
 }
-
+interface IBlockDef {
+    name: string;
+    sprite: string;
+    frameName: string;
+}
 
 const c = require('json-loader!yaml-loader!./config.yml');
 

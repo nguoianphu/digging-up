@@ -24,7 +24,7 @@ export class CardButtonGraphics extends Phaser.GameObjects.Graphics {
         super(scene, {
             x, y,
             fillStyle: { color: 0xfcfcf9, alpha: 1 },
-            lineStyle: { width: 1, color: 0xAAAAAA, alpha: 1 },
+            lineStyle: { width: 5, color: 0xAAAAAA, alpha: 1 },
         });
 
         this.w = w;

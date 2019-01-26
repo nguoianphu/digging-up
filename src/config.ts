@@ -3,6 +3,8 @@
 export type IConfig = {
     spriteWidth: number,
     spriteHeight: number,
+    viewWidth: number,
+    viewHeight: number,
     movementTweenSpeed: number,
     blockMap: number[][],
     blocks: { [x: string]: IBlockDef }

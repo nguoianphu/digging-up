@@ -18,8 +18,12 @@ interface IMoveKeys {
 }
 
 export class Player {
-    public cellX: number;
-    public cellY: number;
+    public cellX: number = 0;
+    public cellY: number = 0;
+
+    constructor() {
+
+    }
 }
 
 enum cellTypes {
@@ -153,14 +157,6 @@ export class MainScene extends Phaser.Scene implements GM {
         this.updatePlayer();
         this.createButtons();
     }
-    updatePlayer(): any {
-        this.add.tween({
-            targets: [this.playerContainer],
-            x: config.spriteWidth * this.player.cellX,
-            y: config.spriteHeight * this.player.cellY,
-            duration: config.movementTweenSpeed,
-        })
-    }
 
     update(time: number, delta: number): void {
 
@@ -169,9 +165,9 @@ export class MainScene extends Phaser.Scene implements GM {
     createButtons() {
         const padding = 4;
         const w = (this.sys.canvas.width - padding * 4) / 4;
-        const h = w;
+        const h = 128;
 
-        this.buttonContainer = this.add.container(0, this.sys.canvas.height - h - 2 * padding);
+        this.buttonContainer = this.add.container(0, this.sys.canvas.height - h);
 
         const btns = new Array(4).fill(1).map((_, i) => {
             return (new CardButton(
@@ -180,7 +176,7 @@ export class MainScene extends Phaser.Scene implements GM {
                 w, h,
                 [
                     this.make.text({
-                        x: 50, y: 40,
+                        x: 50, y: 20,
                         text: `x10`,
                         style: {
                             fontSize: 30,
@@ -191,7 +187,7 @@ export class MainScene extends Phaser.Scene implements GM {
                         origin: { x: 0.5, y: 0.5 },
                     }),
                     this.make.text({
-                        x: 0, y: 70,
+                        x: 0, y: 50,
                         text: `hello A${i}`,
                         style: {
                             fontSize: 30,
@@ -207,12 +203,34 @@ export class MainScene extends Phaser.Scene implements GM {
         this.buttonContainer.add(btns);
     }
 
+    movePlayer(dx: integer, dy: integer) {
+        this.player.cellX = Phaser.Math.Clamp(this.player.cellX + dx, 0, this.cellWorld.width - 1);
+        this.player.cellY = Phaser.Math.Clamp(this.player.cellY + dy, 0, this.cellWorld.height - 1);
+
+        this.updateCells();
+        this.updatePlayer();
+    }
+
+    updatePlayer(): any {
+        this.add.tween({
+            targets: [this.playerContainer],
+            x: config.spriteWidth * (this.player.cellX - this.viewportX),
+            y: config.spriteHeight * (this.player.cellY - this.viewportY),
+            duration: config.movementTweenSpeed,
+        })
+    }
+
     updateCells() {
-        const viewCells = this.cellWorld.getCells(this.viewportX, this.viewportY, 5, 8);
+        const viewportX = Phaser.Math.Clamp(this.player.cellX - 2, 0, this.cellWorld.width - config.viewWidth);
+        const viewportY = Phaser.Math.Clamp(this.player.cellY - 2, 0, this.cellWorld.height - config.viewHeight);
+
+        const viewCells = this.cellWorld.getCells(viewportX, viewportY, config.viewWidth, config.viewHeight);
         viewCells.forEach((col, xx) => {
             col.forEach((cell, yy) => this.updateCell(cell, xx, yy));
         });
 
+        this.viewportX = viewportX;
+        this.viewportY = viewportY;
     }
     updateCell(cell: Cell, xx: number, yy: number): void {
         const { id, stack, name } = cell;

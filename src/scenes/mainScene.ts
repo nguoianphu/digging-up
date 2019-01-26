@@ -1,6 +1,6 @@
 import { bindAll } from 'lodash';
 
-
+import { preload as _preload, setUpAnimations as _setUpAnimations } from '../preload';
 import { EventContext, defaultFont } from '../Utils';
 import { CardButton } from '../UI/CardButton';
 
@@ -8,12 +8,18 @@ import { config } from '../config';
 import { GM } from '../GM';
 
 type Pointer = Phaser.Input.Pointer;
+type Container = Phaser.GameObjects.Container;
 
 interface IMoveKeys {
     down: Phaser.Input.Keyboard.Key,
     up: Phaser.Input.Keyboard.Key,
     right: Phaser.Input.Keyboard.Key,
     left: Phaser.Input.Keyboard.Key,
+}
+
+export class Player {
+    public cellX: number;
+    public cellY: number;
 }
 
 enum cellTypes {
@@ -92,13 +98,16 @@ export class CellWorld {
 export class MainScene extends Phaser.Scene implements GM {
 
     private moveKeys: IMoveKeys;
-    private group1: Phaser.GameObjects.Container;
-    private view: Phaser.GameObjects.Container;
+    private buttonContainer: Container;
+    private view: Container;
 
     private bg: Phaser.GameObjects.Image;
-    private fullscreenButton: Phaser.GameObjects.Text;
-    private group = Phaser.GameObjects.Group;
     cellWorld: CellWorld;
+    private cellContainerBuffer: Container[] = [];
+    private playerContainer: Container;
+    public viewportX: number = 0;
+    public viewportY: number = 0;
+    player: Player;
 
     constructor() {
         super({
@@ -107,43 +116,18 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     preload(): void {
-        this.load.image('bg', './assets/publicDomain/paper_texture_cells_light_55327_1280x720.jpg');
-
-        this.load.atlasXML('spritesheet_complete',
-            './assets/kenney/platformer-pack-redux-360-assets/spritesheet_complete.png',
-            './assets/kenney/platformer-pack-redux-360-assets/spritesheet_complete.xml'
-        );
-        this.load.atlasXML('spritesheet_items',
-            './assets/kenney/voxel-pack/spritesheet_items.png',
-            './assets/kenney/voxel-pack/spritesheet_items.xml'
-        );
-        this.load.atlasXML('spritesheet_items',
-            './assets/kenney/voxel-pack/spritesheet_items.png',
-            './assets/kenney/voxel-pack/spritesheet_items.xml'
-        );
-        this.load.atlasXML('spritesheet_tiles',
-            './assets/kenney/voxel-pack/spritesheet_tiles.png',
-            './assets/kenney/voxel-pack/spritesheet_tiles.xml'
-        );
-        this.load.spritesheet('platformer_redux',
-            './assets/kenney/platformer-art-pixel-redux/spritesheet.png',
-            {
-                frameWidth: 32,
-                // frameHeight:16,
-                spacing: 2,
-                margin: 0,
-                endFrame: 30 * 30,
-
-            }
-        );
-
+        _preload.call(this);
     }
 
     create(): void {
+        _setUpAnimations.call(this);
+
         (<any>window).scene = this;
 
         this.cellWorld = new CellWorld(20, 30);
 
+        // this.viewportX = this.cellWorld.midWidth-2;
+        // this.viewportY = 0;
         this.bg = (
             this.add.tileSprite(
                 0, 0,
@@ -154,14 +138,40 @@ export class MainScene extends Phaser.Scene implements GM {
                 .setScale(4)
         );
         this.view = this.add.container(0, 0);
+        this.player = new Player();
+
+        this.playerContainer = this.add.container(0, 0, [
+            this.add.sprite(
+                config.spriteWidth / 2,
+                config.spriteHeight / 2,
+                'platformercharacters_Player'
+            )
+                .play('allOfPlayer')
+        ]);
 
         this.updateCells();
+        this.updatePlayer();
+        this.createButtons();
+    }
+    updatePlayer(): any {
+        this.add.tween({
+            targets: [this.playerContainer],
+            x: config.spriteWidth * this.player.cellX,
+            y: config.spriteHeight * this.player.cellY,
+            duration: config.movementTweenSpeed,
+        })
+    }
 
+    update(time: number, delta: number): void {
+
+    }
+
+    createButtons() {
         const padding = 4;
         const w = (this.sys.canvas.width - padding * 4) / 4;
         const h = w;
 
-        this.group1 = this.add.container(0, this.sys.canvas.height - h - 2 * padding);
+        this.buttonContainer = this.add.container(0, this.sys.canvas.height - h - 2 * padding);
 
         const btns = new Array(4).fill(1).map((_, i) => {
             return (new CardButton(
@@ -194,32 +204,44 @@ export class MainScene extends Phaser.Scene implements GM {
                 ]
             ));
         });
-        this.group1.add(btns);
-    }
-
-    update(time: number, delta: number): void {
-
+        this.buttonContainer.add(btns);
     }
 
     updateCells() {
-        const viewCells = this.cellWorld.getCells(0, 0, 5, 8);
+        const viewCells = this.cellWorld.getCells(this.viewportX, this.viewportY, 5, 8);
         viewCells.forEach((col, xx) => {
-            col.forEach((cell, yy) => {
-                const { id, stack, name } = cell;
-                const cellContainer = this.add.container(
-                    config.spriteWidth * xx,
-                    config.spriteHeight * yy,
-                    stack.map((blockID) => {
-                        const { name, sprite, frameName } = config.blocks[blockID];
-                        return (this.add.image(0, 0, sprite, frameName)
-                            .setOrigin(0)
-                        );
-                    })
-                )
-                this.view.add(cellContainer)
-            });
+            col.forEach((cell, yy) => this.updateCell(cell, xx, yy));
         });
-        
+
+    }
+    updateCell(cell: Cell, xx: number, yy: number): void {
+        const { id, stack, name } = cell;
+        const bufferedCellContainer = this.cellContainerBuffer.find(c => c.getData('id') === id);
+        if (bufferedCellContainer) {
+            this.tweenCellContainer(bufferedCellContainer, xx, yy);
+        } else {
+            const cellContainer = this.add.container(
+                config.spriteWidth * xx,
+                config.spriteHeight * yy,
+                stack.map((blockID) => {
+                    const { name, sprite, frameName } = config.blocks[blockID];
+                    return (this.add.image(0, 0, sprite, frameName)
+                        .setOrigin(0)
+                    );
+                })
+            );
+            cellContainer.setData('id', id);
+            this.cellContainerBuffer.push(cellContainer);
+            this.view.add(cellContainer);
+        }
+    }
+    tweenCellContainer(cellContainer: Container, xx: number, yy: number): any {
+        this.add.tween({
+            targets: [cellContainer],
+            x: config.spriteWidth * xx,
+            y: config.spriteHeight * yy,
+            duration: config.movementTweenSpeed,
+        })
     }
 
     private registerKeyboard(): void {

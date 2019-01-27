@@ -1,6 +1,8 @@
 
 
 export type IConfig = {
+    worldCellWidth: number,
+    worldCellHeight: number,
     spriteWidth: number,
     spriteHeight: number,
     viewWidth: number,

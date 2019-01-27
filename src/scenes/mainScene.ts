@@ -80,7 +80,7 @@ export class MainScene extends Phaser.Scene implements GM {
 
         (<any>window).scene = this;
 
-        this.cellWorld = new CellWorld(this, 20, 30);
+        this.cellWorld = new CellWorld(this, config.worldCellWidth, config.worldCellHeight);
 
         // this.viewportX = this.cellWorld.midWidth-2;
         // this.viewportY = 0;

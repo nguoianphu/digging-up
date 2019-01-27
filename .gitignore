@@ -9,6 +9,8 @@ build
 node_modules
 *.tsx
 incoming/*
+output/*
+output.zip
 src/games
 cheatsheets
 phaser3-typescript-master.zip

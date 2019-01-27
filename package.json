@@ -36,12 +36,9 @@
     "url": "git+https://github.com/digitsensitive/phaser3-typescript.git"
   },
   "author": {
-    "name": "digitsensitive",
-    "email": "digit.sensitivee@gmail.com"
+    "name": "Dickson Chui (@vicksonzero)",
+    "email": "dicksonZero@gmail.com"
   },
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/digitsensitive/phaser3-typescript/issues"
-  },
   "homepage": "https://github.com/digitsensitive/phaser3-typescript#readme"
 }

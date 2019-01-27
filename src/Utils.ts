@@ -15,3 +15,7 @@ export type EventContext = {
 }
 
 export const defaultFont = 'Helvetica, Arial, SimHei';
+
+export function capitalizeFirstLetter(string: string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}

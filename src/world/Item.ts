@@ -1,6 +1,7 @@
 
 import { config, ItemTypes } from '../config';
 import { CardButton } from '../UI/CardButton';
+import { capitalizeFirstLetter } from '../Utils';
 
 type Container = Phaser.GameObjects.Container;
 type Text = Phaser.GameObjects.Text;
@@ -43,8 +44,8 @@ export class Slot {
                 iconContainer.add(icon);
             }
             const levelString = this.level === 0 ? '' : `+${this.level}`
-            title.setText(`${itemDef.name}${levelString}`);
-            const count = (this.count === -1 ? '∞' : this.count) as string;
+            title.setText(`${capitalizeFirstLetter(itemDef.name)}${levelString}`);
+            const count = this.count == null ? '' : (this.count === -1 ? '∞' : `x${this.count}`) as string;
             countLabel.setText(count);
         });
     }

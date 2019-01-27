@@ -5,10 +5,12 @@
 import "phaser";
 import { MainScene } from "./scenes/mainScene";
 
+import { config } from './config';
+
 // main game configuration
-const config: GameConfig = {
-    width: 128 * 5,
-    height: 128 * 8,
+const phaserConfig: GameConfig = {
+    width: config.spriteWidth * config.viewWidth,
+    height: config.spriteHeight * config.viewHeight,
     disableContextMenu: true,
     type: Phaser.AUTO,
     parent: "game",
@@ -32,19 +34,19 @@ export class Game extends Phaser.Game {
 
 // when the page is loaded, create our game instance
 window.onload = () => {
-    var game = new Game(config);
+    var game = new Game(phaserConfig);
 
     // setTimeout(() => {
     // }, 100);
     function handleSizeUpdate(event?: Event) {
-        const ww = window.innerWidth / Number(config.width);
-        const hh = window.innerHeight / Number(config.height);
+        const ww = window.innerWidth / Number(phaserConfig.width);
+        const hh = window.innerHeight / Number(phaserConfig.height);
 
         const min = Math.min(ww, hh);
         console.log('handleSizeUpdate', window.innerWidth, ww, window.innerHeight, hh, min);
 
-        game.canvas.style.width = `${min * Number(config.width)}px`;
-        game.canvas.style.height = `${min * Number(config.height)}px`;
+        game.canvas.style.width = `${min * Number(phaserConfig.width)}px`;
+        game.canvas.style.height = `${min * Number(phaserConfig.height)}px`;
     }
 
     if (!window.location.search.includes('video')) {

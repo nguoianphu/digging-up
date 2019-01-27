@@ -7,9 +7,10 @@ export type IConfig = {
     viewHeight: number,
     movementTweenSpeed: number,
     controls: IUIControls;
-    blockMap: number[][],
+    blockMap: (number | string)[][],
     blocks: { [x: number]: IBlockDef }
     items: { [x: number]: IItemDef }
+    entities: { [x: number]: IEntityDef }
 }
 
 export interface ISpriteDef {
@@ -68,6 +69,18 @@ export interface IFightingItemDef extends IItemDef {
 export interface IBlockItemDef extends IItemDef {
     block: {
         builds: BlockTypes; // block id
+    }
+}
+
+export interface IEntityDef {
+    name: string;
+    type: string;
+}
+
+export interface IDropEntityDef extends IEntityDef {
+    drop: {
+        item: integer;
+        level: integer;
     }
 }
 

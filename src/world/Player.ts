@@ -5,6 +5,8 @@ import { ItemTypes } from "../config";
 export class Player extends Phaser.Events.EventEmitter {
     public cellX: number = 0;
     public cellY: number = 0;
+    public oldCellX: number = 0;
+    public oldCellY: number = 0;
     public slots: Slot[] = [];
     public activeSlotID: integer = 0;
     public itemLimit: integer = 4;

@@ -1,29 +1,17 @@
-import { config, BlockTypes } from "../config";
+import { config, BlockTypes, IEntityDef, IDropEntityDef } from "../config";
+import { Entity, DropEntity } from "./Entity";
+import { Scene } from "phaser";
+import { MainScene } from "../scenes/mainScene";
 
 export class Cell {
     public name = 'cell';
     public cellID: integer;
     public stack: integer[] = [];
-    public physicsType: 'solid' | 'platform' | 'air' = 'solid';
-    constructor(name: string = 'structure', cellID: integer, blockType: BlockTypes) {
+    public entityStack: integer[] = [];
+    public physicsType: 'solid' | 'platform' | 'air' | 'entity' = 'air';
+    constructor(name: string = 'structure', cellID: integer) {
         this.name = name;
         this.cellID = cellID;
-        this.stack.push(blockType);
-        switch (blockType) {
-            case BlockTypes.AIR: {
-            } break;
-            case BlockTypes.DIRT: {
-            } break;
-            case BlockTypes.STONE: {
-            } break;
-            case BlockTypes.ROCK: {
-            } break;
-            case BlockTypes.OBSIDIAN: {
-            } break;
-            default: {
-                throw new Error(`Unknown blockType: ${blockType}`);
-            }
-        }
         this.updatePhysicsType();
     }
 
@@ -33,6 +21,7 @@ export class Cell {
     }
 
     addBlock(blockType: BlockTypes) {
+        if (blockType == null) return;
         this.stack.push(blockType);
         this.updatePhysicsType();
     }
@@ -42,6 +31,17 @@ export class Cell {
     }
 
     removeBlock(blockLayerID: integer) {
+        this.stack.splice(blockLayerID, 1);
+        this.updatePhysicsType();
+    }
+
+    addEntity(entity: Entity): void {
+        if (!entity) return;
+        this.entityStack.push(entity.entityID);
+        this.updatePhysicsType();
+    }
+
+    removeEntity(blockLayerID: integer) {
         this.stack.splice(blockLayerID, 1);
         this.updatePhysicsType();
     }
@@ -57,7 +57,10 @@ export class Cell {
             } else if (blockDef.type === 'air') {
                 this.physicsType = 'air';
             }
-        })
+        });
+        if (this.entityStack.length > 0 && this.physicsType === 'air') {
+            this.physicsType = 'entity';
+        }
     }
 
     toString() {
@@ -73,8 +76,10 @@ export class CellWorld {
     width: number;
     height: number;
     midWidth: number;
-    constructor(width: number, height: number) {
+    scene: MainScene;
+    constructor(scene: MainScene, width: number, height: number) {
         let id = 0;
+        this.scene = scene;
         this.width = width;
         this.height = height;
 
@@ -82,8 +87,47 @@ export class CellWorld {
 
         this.map = new Array(height).fill(1)
             .map((_, i) => new Array(width).fill(1)
-                .map((_, j) => new Cell('Cell', id++, config.blockMap[i][j]))
+                .map((_, j) => {
+                    const newCell = new Cell('Cell', id++);
+
+                    return newCell;
+                })
             );
+    }
+
+    loadWorld() {
+        (this.map
+            .forEach((col, i) =>
+                col.forEach((cell, j) => {
+                    const blockType = config.blockMap[i][j];
+
+                    if (typeof blockType === 'string') {
+                        const entityID = parseInt(blockType.slice(1), 10);
+                        if (Number.isNaN(entityID)) throw new Error(`entityID isNaN: ${entityID}`);
+                        const entity = this.entityFactory(this.scene, config.entities[entityID], j, i);
+                        this.scene.view.add(entity);
+                        cell.addEntity(entity);
+                    } else {
+                        cell.addBlock(blockType);
+                    }
+                    // switch (blockType) {
+                    //     case BlockTypes.AIR: {
+                    //     } break;
+                    //     case BlockTypes.DIRT: {
+                    //     } break;
+                    //     case BlockTypes.STONE: {
+                    //     } break;
+                    //     case BlockTypes.ROCK: {
+                    //     } break;
+                    //     case BlockTypes.OBSIDIAN: {
+                    //     } break;
+                    //     default: {
+                    //         throw new Error(`Unknown blockType: ${blockType}`);
+                    //     }
+                    // }
+                })
+            )
+        );
     }
 
     getTransposedMap(): Cell[][] {
@@ -104,6 +148,16 @@ export class CellWorld {
         return new Array(w).fill(1).map((_, i) => {
             return this.getTransposedMap()[x + i].slice(y, y + h);
         });
+    }
+
+    entityFactory(scene: Scene, entityDef: IEntityDef, cellX: number, cellY: number): Entity {
+        switch (entityDef.type) {
+            case 'drop': {
+                const chestDef = entityDef as IDropEntityDef;
+                return new DropEntity(scene, chestDef, cellX, cellY);
+            } break;
+            default:
+        }
     }
 
     toString() {

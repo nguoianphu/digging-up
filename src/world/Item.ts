@@ -1,5 +1,5 @@
 
-import { config } from '../config';
+import { config, ItemTypes } from '../config';
 import { CardButton } from '../UI/CardButton';
 
 type Container = Phaser.GameObjects.Container;
@@ -31,29 +31,22 @@ export class Slot {
         button.updateChildren((scene: Scene, iconContainer: Container, title: Text, countLabel: Text) => {
             const itemDef = this.itemDef;
             iconContainer.removeAll(true);
-            if (this.itemID === ItemType.EMPTY) {
-                title.setText(``);
-                countLabel.setText('');
+            if (this.itemID === ItemTypes.EMPTY) {
             } else {
-
-                const { key, frame } = itemDef.sprites[this.level];
+                const { key, frame, scale } = itemDef.sprites[this.level];
 
                 const icon = scene.make.image({
                     key, frame,
                     x: 0,
                     y: 0,
+                    scale: scale || 1,
                 });
                 iconContainer.add(icon);
-                const levelString = this.level === 0 ? '' : `+${this.level}`
-                title.setText(`${itemDef.name}${levelString}`);
-                const count = (this.count === -1 ? '∞' : this.count) as string;
-                countLabel.setText(count);
             }
+            const levelString = this.level === 0 ? '' : `+${this.level}`
+            title.setText(`${itemDef.name}${levelString}`);
+            const count = (this.count === -1 ? '∞' : this.count) as string;
+            countLabel.setText(count);
         });
     }
-}
-
-export enum ItemType {
-    EMPTY = 0,
-    PICK = 1,
 }

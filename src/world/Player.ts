@@ -1,4 +1,5 @@
-import { Slot, ItemType } from "./Item";
+import { Slot } from "./Item";
+import { ItemTypes } from "../config";
 
 
 export class Player extends Phaser.Events.EventEmitter {
@@ -12,7 +13,7 @@ export class Player extends Phaser.Events.EventEmitter {
 
     constructor() {
         super();
-        this.slots = new Array(this.itemLimit).fill(1).map(_ => new Slot(ItemType.EMPTY, 0));
+        this.slots = new Array(this.itemLimit).fill(1).map(_ => new Slot(ItemTypes.EMPTY, 0));
     }
 
     getActiveSlotItem() {
@@ -26,16 +27,24 @@ export class Player extends Phaser.Events.EventEmitter {
         this.emit(Player.onActiveUpdated, this.activeSlotID);
     }
 
-    addItem(itemID: ItemType, level: integer, count?: integer): integer {
-        const emptyID = this.slots.findIndex((item) => item.itemID === ItemType.EMPTY);
+    addItem(itemID: ItemTypes, level: integer, count?: integer): integer {
+        const emptyID = this.slots.findIndex((item) => item.itemID === ItemTypes.EMPTY);
         this.slots[emptyID] = new Slot(itemID, level);
         if (count != null) this.slots[emptyID].setCount(count);
         this.emit(Player.onItemUpdated, emptyID);
         return emptyID;
     }
 
-    removeItem(slotID: integer) {
-        this.slots[slotID] = new Slot(ItemType.EMPTY, 0);
+    consumeItem(slotID: integer) {
+        this.slots[slotID].count--;
+        if (this.slots[slotID].count <= 0 && this.slots[slotID].itemDef.uses !== -1) {
+            this.removeItem(slotID, true);
+        }
         this.emit(Player.onItemUpdated, slotID);
+    }
+
+    removeItem(slotID: integer, isSilent: boolean = false) {
+        this.slots[slotID] = new Slot(ItemTypes.EMPTY, 0);
+        if (!isSilent) this.emit(Player.onItemUpdated, slotID);
     }
 }

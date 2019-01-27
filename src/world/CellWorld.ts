@@ -1,24 +1,24 @@
-import { config, blockTypes } from "../config";
+import { config, BlockTypes } from "../config";
 
 export class Cell {
     public name = 'cell';
     public cellID: integer;
     public stack: integer[] = [];
     public physicsType: 'solid' | 'platform' | 'air' = 'solid';
-    constructor(name: string = 'structure', cellID: integer, blockType: blockTypes) {
+    constructor(name: string = 'structure', cellID: integer, blockType: BlockTypes) {
         this.name = name;
         this.cellID = cellID;
         this.stack.push(blockType);
         switch (blockType) {
-            case blockTypes.AIR: {
+            case BlockTypes.AIR: {
             } break;
-            case blockTypes.DIRT: {
+            case BlockTypes.DIRT: {
             } break;
-            case blockTypes.STONE: {
+            case BlockTypes.STONE: {
             } break;
-            case blockTypes.ROCK: {
+            case BlockTypes.ROCK: {
             } break;
-            case blockTypes.OBSIDIAN: {
+            case BlockTypes.OBSIDIAN: {
             } break;
             default: {
                 throw new Error(`Unknown blockType: ${blockType}`);
@@ -32,8 +32,9 @@ export class Cell {
         return this.stack[this.stack.length - 1];
     }
 
-    addBlock() {
-
+    addBlock(blockType: BlockTypes) {
+        this.stack.push(blockType);
+        this.updatePhysicsType();
     }
 
     removeTopBlock() {
@@ -47,7 +48,7 @@ export class Cell {
 
     updatePhysicsType() {
         this.physicsType = 'air';
-        this.stack.forEach((blockType: blockTypes) => {
+        this.stack.forEach((blockType: BlockTypes) => {
             const blockDef = config.blocks[blockType];
             if (blockDef.type === 'solid') {
                 this.physicsType = 'solid';

@@ -3,7 +3,7 @@ config:
   spriteHeight: 128
   viewWidth: 5
   viewHeight: 7
-  movementTweenSpeed: 700
+  movementTweenSpeed: 500
   controls:
     swipeThumbSize: 50
     minSwipeDist: 30
@@ -77,11 +77,11 @@ config:
     5:
       name: ladder
       type: platform
-      key: 'spritesheet_tiles'
-      frame: 'greystone'
+      key: 'spritesheet_complete'
+      frame: 'ladderMid'
   items:
     0:
-      name: empty
+      name: hand
       types: []
       sprites: 
         - key: ''
@@ -97,6 +97,7 @@ config:
         - key: 'spritesheet_items'
           frame: 'pick_gold'
       uses: -1
+      maxStack: 1
       mining:
         strength: [1, 2, 3]
     2:
@@ -110,6 +111,7 @@ config:
         - key: 'spritesheet_items'
           frame: 'sword_gold'
       uses: -1
+      maxStack: 1
       fight:
         strength: [1, 2, 3]
     3:
@@ -123,10 +125,22 @@ config:
         - key: 'spritesheet_items'
           frame: 'hammer_gold'
       uses: 20
+      maxStack: 20
       fight:
         strength: [1, 1, 2]
       mining:
         strength: [1, 2, 2]
+    4:
+      name: ladder
+      types: [block]
+      sprites: 
+        - key: 'spritesheet_complete'
+          frame: 'ladderMid'
+          scale: 0.5
+      uses: 1
+      maxStack: 20
+      block:
+        builds: 5 #ladder
 
 
 

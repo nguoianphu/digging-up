@@ -12,17 +12,23 @@ export type IConfig = {
     items: { [x: number]: IItemDef }
 }
 
-export interface IBlockDef extends ISprite {
+export interface ISpriteDef {
+    key: string;
+    frame: string;
+    scale?: number;
+}
+
+export interface IBlockDef extends ISpriteDef {
     name: string;
     type: 'air' | 'solid' | 'platform';
 }
 
-export enum blockTypes {
+export enum BlockTypes {
     AIR = 0,
     DIRT = 1,
     STONE = 2,
     ROCK = 3,
-    OBSIDIAN=4,
+    OBSIDIAN = 4,
 }
 
 export interface ISolidBlockDef extends IBlockDef {
@@ -34,12 +40,17 @@ export interface ISolidBlockDef extends IBlockDef {
 export interface IItemDef {
     name: string;
     types: string[];
-    sprites: ISprite[];
+    sprites: ISpriteDef[];
     uses: number;
+    maxStack: number;
 }
-export interface ISprite {
-    key: string;
-    frame: string;
+
+export enum ItemTypes {
+    EMPTY = 0,
+    PICK = 1,
+    SWORD = 2,
+    WARHAMMER = 3,
+    LADDER = 4,
 }
 
 export interface IMiningItemDef extends IItemDef {
@@ -51,6 +62,12 @@ export interface IMiningItemDef extends IItemDef {
 export interface IFightingItemDef extends IItemDef {
     fight: {
         strength: number[];
+    }
+}
+
+export interface IBlockItemDef extends IItemDef {
+    block: {
+        builds: BlockTypes; // block id
     }
 }
 

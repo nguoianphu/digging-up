@@ -3,9 +3,9 @@ import { bindAll } from 'lodash';
 import { preload as _preload, setUpAnimations as _setUpAnimations } from '../preload';
 import { EventContext, defaultFont } from '../Utils';
 import { CardButton } from '../UI/CardButton';
-import { Slot, ItemType } from '../world/Item';
+import { Slot } from '../world/Item';
 
-import { config, blockTypes, ISolidBlockDef, IMiningItemDef } from '../config';
+import { config, ItemTypes, BlockTypes, ISolidBlockDef, IMiningItemDef, IBlockDef, IBlockItemDef } from '../config';
 import { GM } from '../GM';
 import { Player } from '../world/Player';
 import { CellWorld, Cell } from '../world/CellWorld';
@@ -105,8 +105,10 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     startGame() {
-        const addedSlotID = this.player.addItem(ItemType.PICK, 0);
-        this.player.changeActiveSlot(addedSlotID);
+        const pickSlotID = this.player.addItem(ItemTypes.PICK, 0);
+        this.player.addItem(ItemTypes.LADDER, 0, 20);
+        this.slotButtons.forEach((_, i) => this.updateSlotButton(i));
+        this.player.changeActiveSlot(pickSlotID);
     }
 
     update(time: number, delta: number): void {
@@ -140,7 +142,17 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     onSlotButtonPressed(slotID: integer) {
-        this.player.changeActiveSlot(slotID);
+        if (this.player.slots[slotID].itemDef.types.includes('block')) {
+            const blockID = (<IBlockItemDef>this.player.slots[slotID].itemDef).block.builds;
+            const cell = this.cellWorld.getCell(this.player.cellX, this.player.cellY);
+            const success = this.tryAddBlock(cell, blockID);
+            if (success) {
+                this.player.consumeItem(slotID);
+                this.updateCells();
+            }
+        } else {
+            this.player.changeActiveSlot(slotID);
+        }
     }
 
     createJoystick() {
@@ -282,6 +294,13 @@ export class MainScene extends Phaser.Scene implements GM {
             this.updateCells();
         }
         return worldChanged;
+    }
+
+    tryAddBlock(cell: Cell, blockID: integer): boolean {
+        // const blockDef: IBlockDef;
+        if (cell.physicsType !== 'air') return false;
+        cell.addBlock(blockID);
+        return true;
     }
 
     updatePlayer(): any {

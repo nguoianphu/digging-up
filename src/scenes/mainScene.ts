@@ -51,6 +51,15 @@ export class MainScene extends Phaser.Scene implements GM {
     slotButtons: CardButton[];
     playerSprite: Sprite;
 
+    public inputLock: boolean[] = [];
+    get canInput() {
+        return this.inputLock.length === 0;
+    }
+    public inputQueue = {
+        direction: { x: 0, y: 0 },
+        slotInput: -1,
+    };
+
     constructor() {
         super({
             key: "MainScene"
@@ -90,7 +99,7 @@ export class MainScene extends Phaser.Scene implements GM {
         this.playerContainer = this.add.container(0, 0, [
             this.playerSprite = this.add.sprite(
                 config.spriteWidth / 2,
-                config.spriteHeight / 2,
+                config.spriteHeight / 2 + 9,
                 'platformercharacters_Player'
             )
                 .play('player_idle')
@@ -112,7 +121,17 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     update(time: number, delta: number): void {
-
+        if (this.canInput) {
+            if (this.inputQueue.direction.x !== 0 || this.inputQueue.direction.y !== 0) {
+                this.movePlayer(this.inputQueue.direction.x, this.inputQueue.direction.y);
+                this.inputQueue.direction.x = 0;
+                this.inputQueue.direction.y = 0;
+            }
+            if (this.inputQueue.slotInput !== -1) {
+                this.triggerSlot(this.inputQueue.slotInput);
+                this.inputQueue.slotInput = -1;
+            }
+        }
     }
 
     createSlotButtons() {
@@ -142,6 +161,10 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     onSlotButtonPressed(slotID: integer) {
+        this.inputQueue.slotInput = slotID;
+    }
+
+    triggerSlot(slotID: integer) {
         if (this.player.slots[slotID].itemDef.types.includes('block')) {
             const blockID = (<IBlockItemDef>this.player.slots[slotID].itemDef).block.builds;
             const cell = this.cellWorld.getCell(this.player.cellX, this.player.cellY);
@@ -178,13 +201,15 @@ export class MainScene extends Phaser.Scene implements GM {
             this.joyStickArea.strokeCircle(localX, localY, config.controls.swipeThumbSize);
 
         });
-        this.joyStickArea.on('pointerup', (pointer: Pointer, localX: number, localY: number, evt: EventContext) => {
+        this.input.on('pointerup', (pointer: Pointer, sprite: Sprite) => {
             // console.log('pointerup', pointer, localX, localY, evt);
+            const { upX, upY } = pointer;
             const startX = this.buttonContainer.getData('startX');
             const startY = this.buttonContainer.getData('startY');
+            if (!startX) return;
 
-            const dist = Phaser.Math.Distance.Between(startX, startY, localX, localY);
-            const angle = Phaser.Math.Angle.BetweenPoints({ x: startX, y: startY }, { x: localX, y: localY });
+            const dist = Phaser.Math.Distance.Between(startX, startY, upX, upY);
+            const angle = Phaser.Math.Angle.BetweenPoints({ x: startX, y: startY }, { x: upX, y: upY });
             const dir = angleToDirection(angle, config.controls.directionSnaps) as 0 | 1 | 2 | 3;
 
             if (dist < config.controls.minSwipeDist) {
@@ -194,6 +219,8 @@ export class MainScene extends Phaser.Scene implements GM {
                 console.log('pointerup angle', dir);
                 this.onInputMove(dist, angle, dir);
             }
+            this.buttonContainer.setData('startX', null);
+            this.buttonContainer.setData('startY', null);
             this.joyStickArea.clear();
         });
         this.input.setDraggable(this.joyStickArea);
@@ -227,6 +254,11 @@ export class MainScene extends Phaser.Scene implements GM {
         // this.joyStickArea.strokeRoundedRect(0, 0, w, h, 4);
         // this.joyStickArea.fillRoundedRect(0, 0, w, h, 4);
 
+    }
+
+    queueMovePlayer(dx: integer, dy: integer) {
+        this.inputQueue.direction.x = dx;
+        this.inputQueue.direction.y = dy;
     }
 
     movePlayer(dx: integer, dy: integer) {
@@ -314,7 +346,7 @@ export class MainScene extends Phaser.Scene implements GM {
         })
     }
 
-    updateCells() {
+    async updateCells() {
         const viewportX = Phaser.Math.Clamp(this.player.cellX - 2, 0, this.cellWorld.width - config.viewWidth);
         const viewportY = Phaser.Math.Clamp(this.player.cellY - 3, 0, this.cellWorld.height - config.viewHeight);
 
@@ -325,7 +357,9 @@ export class MainScene extends Phaser.Scene implements GM {
 
         this.viewportX = viewportX;
         this.viewportY = viewportY;
-        this.tweenView(this.viewportX, this.viewportY);
+        this.inputLock.push(!!1);
+        await this.tweenView(this.viewportX, this.viewportY);
+        this.inputLock.pop();
     }
     updateCell(cell: Cell, xx: number, yy: number): void {
         const { cellID: id, stack, name } = cell;
@@ -384,7 +418,7 @@ export class MainScene extends Phaser.Scene implements GM {
         };
         const delta: { x: number, y: number } = a[dir];
 
-        this.movePlayer(delta.x, delta.y);
+        this.queueMovePlayer(delta.x, delta.y);
     }
 
     private registerKeyboard(): void {

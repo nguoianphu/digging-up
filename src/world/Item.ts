@@ -31,8 +31,7 @@ export class Slot {
         button.updateChildren((scene: Scene, iconContainer: Container, title: Text, countLabel: Text) => {
             const itemDef = this.itemDef;
             iconContainer.removeAll(true);
-            if (this.itemID === ItemTypes.EMPTY) {
-            } else {
+            if (this.itemID !== ItemTypes.EMPTY) {
                 const { key, frame, scale } = itemDef.sprites[this.level];
 
                 const icon = scene.make.image({

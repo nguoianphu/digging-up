@@ -3,7 +3,10 @@ config:
   spriteHeight: 128
   viewWidth: 5
   viewHeight: 7
-  movementTweenSpeed: 500
+  movementTweenSpeed: 300
+  controls:
+    minSwipeDist: 30
+    directionSnaps: 4
   # 0=air, 1=dirt, 2=ctone, 3=rock
   blockMap:
     - [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]

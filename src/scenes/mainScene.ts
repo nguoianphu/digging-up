@@ -9,6 +9,8 @@ import { GM } from '../GM';
 
 type Pointer = Phaser.Input.Pointer;
 type Container = Phaser.GameObjects.Container;
+type Graphics = Phaser.GameObjects.Graphics;
+type GameObject = Phaser.GameObjects.GameObject;
 
 interface IMoveKeys {
     down: Phaser.Input.Keyboard.Key,
@@ -99,6 +101,15 @@ export class CellWorld {
 }
 
 
+
+export function angleToDirection(angle: number, divisions: integer) {
+    const TAU = 2 * Math.PI;
+    // angle in radian
+    if (angle < 0) { angle = TAU + angle; };
+    return Math.floor((angle + TAU / divisions / 2) / (TAU / divisions)) % divisions;
+}
+
+
 export class MainScene extends Phaser.Scene implements GM {
 
     private moveKeys: IMoveKeys;
@@ -112,6 +123,7 @@ export class MainScene extends Phaser.Scene implements GM {
     public viewportX: number = 0;
     public viewportY: number = 0;
     player: Player;
+    joyStickArea: Graphics;
 
     constructor() {
         super({
@@ -156,6 +168,7 @@ export class MainScene extends Phaser.Scene implements GM {
         this.updateCells();
         this.updatePlayer();
         this.createButtons();
+        this.createJoystick();
     }
 
     update(time: number, delta: number): void {
@@ -203,6 +216,55 @@ export class MainScene extends Phaser.Scene implements GM {
         this.buttonContainer.add(btns);
     }
 
+    createJoystick() {
+        const w = this.sys.canvas.width;
+        const h = this.sys.canvas.height - 128;
+
+        this.buttonContainer = this.add.container(0, 0, [
+            this.joyStickArea = this.add.graphics({
+                x: 0, y: 0,
+                fillStyle: { color: 0xffffff, alpha: 1 },
+                lineStyle: { width: 5, color: 0xAAAAAA, alpha: 1 },
+            })
+        ]);
+
+        this.joyStickArea.setInteractive(new Phaser.Geom.Rectangle(0, 0, w, h), Phaser.Geom.Rectangle.Contains);
+
+        this.joyStickArea.on('pointerdown', (pointer: Pointer, localX: number, localY: number, evt: EventContext) => {
+            // console.log('pointerdown', pointer, localX, localY, evt);
+            this.buttonContainer.setData('startX', localX);
+            this.buttonContainer.setData('startY', localY);
+        });
+        this.joyStickArea.on('pointerup', (pointer: Pointer, localX: number, localY: number, evt: EventContext) => {
+            // console.log('pointerup', pointer, localX, localY, evt);
+            const startX = this.buttonContainer.getData('startX');
+            const startY = this.buttonContainer.getData('startY');
+
+            const dist = Phaser.Math.Distance.Between(startX, startY, localX, localY);
+            const angle = Phaser.Math.Angle.BetweenPoints({ x: startX, y: startY }, { x: localX, y: localY });
+            const dir = angleToDirection(angle, config.controls.directionSnaps) as 0 | 1 | 2 | 3;
+
+            if (dist < config.controls.minSwipeDist) {
+                console.log('pointerup dist', dist);
+                this.onInputNoAction(dist, angle, dir);
+            } else {
+                console.log('pointerup angle', dir);
+                this.onInputMove(dist, angle, dir);
+            }
+        });
+        this.input.setDraggable(this.joyStickArea);
+        this.joyStickArea.on('drag', (pointer: Pointer, dragX: number, dragY: number) => {
+            // console.log('drag', dragX, dragY);
+
+        });
+
+        // this.joyStickArea.clear();
+        // this.joyStickArea.fillStyle(0xfcfcf9, 1);
+        // this.joyStickArea.strokeRoundedRect(0, 0, w, h, 4);
+        // this.joyStickArea.fillRoundedRect(0, 0, w, h, 4);
+
+    }
+
     movePlayer(dx: integer, dy: integer) {
         this.player.cellX = Phaser.Math.Clamp(this.player.cellX + dx, 0, this.cellWorld.width - 1);
         this.player.cellY = Phaser.Math.Clamp(this.player.cellY + dy, 0, this.cellWorld.height - 1);
@@ -236,7 +298,7 @@ export class MainScene extends Phaser.Scene implements GM {
         const { id, stack, name } = cell;
         const bufferedCellContainer = this.cellContainerBuffer.find(c => c.getData('id') === id);
         if (bufferedCellContainer) {
-            this.tweenCellContainer(bufferedCellContainer, xx, yy);
+            // 
         } else {
             const cellContainer = this.add.container(
                 config.spriteWidth * xx,
@@ -259,7 +321,24 @@ export class MainScene extends Phaser.Scene implements GM {
             x: config.spriteWidth * xx,
             y: config.spriteHeight * yy,
             duration: config.movementTweenSpeed,
+
         })
+    }
+
+    onInputNoAction(dist: number, angle: number, dir: integer) {
+
+    }
+
+    onInputMove(dist: number, angle: number, dir: 0 | 1 | 2 | 3) {
+        const a = {
+            0: { x: 1, y: 0 },
+            1: { x: 0, y: 1 },
+            2: { x: -1, y: 0 },
+            3: { x: 0, y: -1 },
+        };
+        const delta: { x: number, y: number } = a[dir];
+
+        this.movePlayer(delta.x, delta.y);
     }
 
     private registerKeyboard(): void {

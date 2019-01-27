@@ -3,18 +3,19 @@ config:
   spriteHeight: 128
   viewWidth: 5
   viewHeight: 7
-  movementTweenSpeed: 300
+  movementTweenSpeed: 700
   controls:
+    swipeThumbSize: 50
     minSwipeDist: 30
     directionSnaps: 4
   # 0=air, 1=dirt, 2=ctone, 3=rock
   blockMap:
     - [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     - [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-    - [2, 3, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-    - [1, 3, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 2, 2, 1, 1, 1]
-    - [1, 3, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 1, 3, 1, 1, 1, 1, 1, 1]
-    - [1, 2, 2, 1, 1, 1, 1, 2, 1, 1, 2, 1, 2, 1, 2, 1, 3, 2, 1, 1]
+    - [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    - [1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 2, 2, 1, 1, 1]
+    - [1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 1, 3, 1, 1, 1, 1, 1, 1]
+    - [1, 2, 3, 1, 1, 1, 1, 2, 1, 1, 2, 1, 2, 1, 2, 1, 3, 2, 1, 1]
     - [1, 1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1]
     - [1, 1, 2, 1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 1, 1, 2, 1, 1]
     - [1, 1, 2, 1, 1, 3, 1, 1, 1, 1, 2, 1, 1, 2, 2, 1, 1, 1, 1, 2]
@@ -43,25 +44,90 @@ config:
     0:
       name: air
       type: air
-      sprite: 'spritesheet_tiles'
-      frameName: ''
+      key: ''
+      frame: ''
     1:
       name: dirt
       type: solid
-      sprite: 'spritesheet_tiles'
-      frameName: 'dirt'
+      key: 'spritesheet_tiles'
+      frame: 'dirt'
+      solid:
+        strength: 1
     2:
       name: stone
       type: solid
-      sprite: 'spritesheet_tiles'
-      frameName: 'stone'
+      key: 'spritesheet_tiles'
+      frame: 'stone'
+      solid:
+        strength: 2
     3:
       name: rock
       type: solid
-      sprite: 'spritesheet_tiles'
-      frameName: 'greystone'
+      key: 'spritesheet_tiles'
+      frame: 'greystone'
+      solid:
+        strength: 3
     4:
       name: ladder
       type: platform
-      sprite: 'spritesheet_tiles'
-      frameName: 'greystone'
+      key: 'spritesheet_tiles'
+      frame: 'greystone'
+  items:
+    0:
+      name: empty
+      types: []
+      sprites: 
+        - key: ''
+          frame: ''
+    1:
+      name: pick
+      types: [mining]
+      sprites: 
+        - key: 'spritesheet_items'
+          frame: 'pick_bronze'
+        - key: 'spritesheet_items'
+          frame: 'pick_silver'
+        - key: 'spritesheet_items'
+          frame: 'pick_gold'
+      uses: -1
+      mining:
+        strength: [1, 2, 3]
+    2:
+      name: sword
+      types: [fight]
+      sprites: 
+        - key: 'spritesheet_items'
+          frame: 'sword_bronze'
+        - key: 'spritesheet_items'
+          frame: 'sword_silver'
+        - key: 'spritesheet_items'
+          frame: 'sword_gold'
+      uses: -1
+      fight:
+        strength: [1, 2, 3]
+    3:
+      name: warhammer
+      types: [mining, fight]
+      sprites: 
+        - key: 'spritesheet_items'
+          frame: 'hammer_bronze'
+        - key: 'spritesheet_items'
+          frame: 'hammer_silver'
+        - key: 'spritesheet_items'
+          frame: 'hammer_gold'
+      uses: 20
+      fight:
+        strength: [1, 1, 2]
+      mining:
+        strength: [1, 2, 2]
+
+
+
+
+
+
+
+
+
+
+

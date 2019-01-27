@@ -10,10 +10,6 @@ export function preload(this: Phaser.Scene) {
         './assets/kenney/voxel-pack/spritesheet_items.png',
         './assets/kenney/voxel-pack/spritesheet_items.xml'
     );
-    this.load.atlasXML('spritesheet_items',
-        './assets/kenney/voxel-pack/spritesheet_items.png',
-        './assets/kenney/voxel-pack/spritesheet_items.xml'
-    );
     this.load.atlasXML('spritesheet_tiles',
         './assets/kenney/voxel-pack/spritesheet_tiles.png',
         './assets/kenney/voxel-pack/spritesheet_tiles.xml'
@@ -41,14 +37,23 @@ export function preload(this: Phaser.Scene) {
     );
 }
 
-export function setUpAnimations(this: Phaser.Scene){
+export function setUpAnimations(this: Phaser.Scene) {
     this.anims.create({
-        key: 'allOfPlayer',
+        key: 'player_idle',
         frames: this.anims.generateFrameNames(
             'platformercharacters_Player',
-            { frames: new Array(24).fill(1).map((_, i) => i) }
+            { frames: [0] }
+        ),
+        repeat: 0,
+        frameRate: 4
+    });
+    this.anims.create({
+        key: 'player_walk',
+        frames: this.anims.generateFrameNames(
+            'platformercharacters_Player',
+            { frames: [16, 17] }
         ),
         repeat: -1,
-        frameRate: 4
+        frameRate: 5
     });
 }

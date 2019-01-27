@@ -98,7 +98,7 @@ export class MainScene extends Phaser.Scene implements GM {
         this.player.on(Player.onItemUpdated, (slotID: integer) => this.updateSlotButton(slotID));
         this.player.on(Player.onActiveUpdated, (slotID: integer) => {
             this.deactivateSlotButtons();
-            this.updateSlotButton(slotID);
+            if (slotID !== -1) this.updateSlotButton(slotID);
         });
 
         this.playerContainer = this.add.container(0, 0, [
@@ -168,7 +168,7 @@ export class MainScene extends Phaser.Scene implements GM {
 
     removeInputLock(reason: string) {
         this.inputLock.splice(this.inputLock.indexOf(reason), 1);
-        console.log(`removeInputLock(reason: ${reason}), ${this.inputLock.length}`);
+        // console.log(`removeInputLock(reason: ${reason}), ${this.inputLock.length}`);
         this.onInputLockUpdated();
     }
 
@@ -203,7 +203,8 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     triggerSlot(slotID: integer) {
-        if (this.player.slots[slotID].itemDef.types.includes('block')) {
+        const targetSlot = this.player.slots[slotID];
+        if (targetSlot.itemDef.types.includes('block')) {
             const blockID = (<IBlockItemDef>this.player.slots[slotID].itemDef).block.builds;
             const cell = this.cellWorld.getCell(this.player.cellX, this.player.cellY);
             const success = this.tryAddBlock(cell, blockID);
@@ -212,7 +213,7 @@ export class MainScene extends Phaser.Scene implements GM {
                 this.updateCells();
             }
         } else {
-            this.player.changeActiveSlot(slotID);
+            this.player.toggleActiveSlot(slotID);
         }
     }
 
@@ -312,7 +313,7 @@ export class MainScene extends Phaser.Scene implements GM {
             let canMove = true;
 
             if (destCell.physicsType === 'solid') {
-                if (activeItem.itemDef.types.includes('mining')) {
+                if (activeItem && activeItem.itemDef.types.includes('mining')) {
                     worldChanged = this.tryDigCell(destCell, this.player, activeItem);
                 }
             }
@@ -321,8 +322,8 @@ export class MainScene extends Phaser.Scene implements GM {
 
             if (destCell.physicsType === 'solid') {
                 canMove = false;
-                console.log('tryClimbStairs');
                 if (dx !== 0 && dy === 0) {
+                    console.log('tryClimbStairs');
                     const diagCell = this.cellWorld.getCell(newCellX, newCellY - 1);
                     const aboveCell = this.cellWorld.getCell(this.player.cellX, this.player.cellY - 1);
                     if (diagCell && diagCell.physicsType !== 'solid' && aboveCell && aboveCell.physicsType !== 'solid') {

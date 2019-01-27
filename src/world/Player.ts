@@ -19,9 +19,23 @@ export class Player extends Phaser.Events.EventEmitter {
     }
 
     getActiveSlotItem() {
+        if (this.activeSlotID === -1) return null;
         return this.slots[this.activeSlotID];
     }
 
+    toggleActiveSlot(slotID: integer) {
+        if (this.activeSlotID !== -1) {
+            this.slots[this.activeSlotID].isActive = false;
+        }
+        if (this.activeSlotID !== slotID) {
+            this.activeSlotID = slotID;
+            this.slots[this.activeSlotID].isActive = true;
+        } else {
+            this.activeSlotID = -1;
+        }
+        this.emit(Player.onActiveUpdated, this.activeSlotID);
+    }
+    
     changeActiveSlot(slotID: integer) {
         this.slots[this.activeSlotID].isActive = false;
         this.activeSlotID = slotID;

@@ -51,7 +51,7 @@ export enum ItemTypes {
     PICK = 1,
     SWORD = 2,
     WARHAMMER = 3,
-    LADDER = 4,
+    PLATFORM = 4,
 }
 
 export interface IMiningItemDef extends IItemDef {
@@ -81,6 +81,7 @@ export interface IDropEntityDef extends IEntityDef {
     drop: {
         item: integer;
         level: integer;
+        count?: integer;
     }
 }
 

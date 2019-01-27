@@ -24,6 +24,11 @@ export abstract class Entity extends Phaser.GameObjects.Container {
     public static getEntityByID(entityID: integer): Entity {
         return _entities[entityID];
     }
+    public static destroyEntity(entity: Entity) {
+        _entities[entity.entityID].destroy();
+        _entities[entity.entityID] = null;
+    }
+
 
     constructor(scene: Scene, entityDef: IEntityDef, cellX: number, cellY: number) {
         super(scene, cellX * config.spriteWidth, cellY * config.spriteHeight);
@@ -52,9 +57,10 @@ export class DropEntity extends Entity {
 
         const itemIcon = scene.make.image({
             x: config.spriteWidth / 2,
-            y: config.spriteHeight / 2,
+            y: config.spriteHeight / 4 * 3,
             key: itemDef.sprites[level].key,
             frame: itemDef.sprites[level].frame,
+            scale: 0.5,
         });
         this.add(itemIcon);
     }

@@ -9,7 +9,7 @@ import { config, ItemTypes, BlockTypes, ISolidBlockDef, IMiningItemDef, IBlockDe
 import { GM } from '../GM';
 import { Player } from '../world/Player';
 import { CellWorld, Cell } from '../world/CellWorld';
-import { Entity } from '../world/Entity';
+import { Entity, DropEntity } from '../world/Entity';
 
 type Pointer = Phaser.Input.Pointer;
 type Container = Phaser.GameObjects.Container;
@@ -123,7 +123,7 @@ export class MainScene extends Phaser.Scene implements GM {
 
     startGame() {
         const pickSlotID = this.player.addItem(ItemTypes.PICK, 0);
-        this.player.addItem(ItemTypes.LADDER, 0, 20);
+        this.player.addItem(ItemTypes.PLATFORM, 0, 8);
         this.slotButtons.forEach((_, i) => this.updateSlotButton(i));
         this.player.changeActiveSlot(pickSlotID);
     }
@@ -345,10 +345,18 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     checkEntityAndInteract() {
-
-        const belowCell = this.cellWorld.getCell(this.player.cellX, this.player.cellY + 1);
-        if (belowCell.physicsType === 'air' || belowCell.physicsType === 'entity') {
-            this.movePlayer(0, 1);
+        const playerCell = this.cellWorld.getCell(this.player.cellX, this.player.cellY);
+        if (playerCell.physicsType === 'entity') {
+            playerCell.entityStack.forEach((entityID, i) => {
+                const entity = Entity.getEntityByID(entityID);
+                if (entity.type === 'drop') {
+                    const dropEntity = entity as DropEntity;
+                    const drop = dropEntity.entityDef.drop;
+                    this.player.addItem(drop.item, drop.level, drop.count);
+                    playerCell.removeEntity(entity);
+                    Entity.destroyEntity(entity);
+                }
+            });
         }
     }
 

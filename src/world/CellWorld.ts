@@ -41,8 +41,8 @@ export class Cell {
         this.updatePhysicsType();
     }
 
-    removeEntity(blockLayerID: integer) {
-        this.stack.splice(blockLayerID, 1);
+    removeEntity(entity: Entity) {
+        this.entityStack.splice(this.entityStack.indexOf(entity.entityID));
         this.updatePhysicsType();
     }
 

@@ -30,11 +30,22 @@ export class Player extends Phaser.Events.EventEmitter {
     }
 
     addItem(itemID: ItemTypes, level: integer, count?: integer): integer {
-        const emptyID = this.slots.findIndex((item) => item.itemID === ItemTypes.EMPTY);
-        this.slots[emptyID] = new Slot(itemID, level);
-        if (count != null) this.slots[emptyID].setCount(count);
-        this.emit(Player.onItemUpdated, emptyID);
-        return emptyID;
+        const slotID = this.slots.findIndex((item) => item.itemID === ItemTypes.EMPTY || item.itemID === itemID);
+
+        let slot = this.slots[slotID];
+
+        if (slot.itemID === ItemTypes.EMPTY) {
+            this.slots[slotID] = new Slot(itemID, level);
+            if (count != null) this.slots[slotID].setCount(count);
+        } else {
+            // found same item in slot
+            slot.level = Math.max(slot.level, level);
+            if (slot.itemDef.uses !== -1 && count != null) slot.count += count;
+        }
+        slot = this.slots[slotID];
+        slot.count = Math.min(slot.count, slot.itemDef.maxStack);
+        this.emit(Player.onItemUpdated, slotID);
+        return slotID;
     }
 
     consumeItem(slotID: integer) {

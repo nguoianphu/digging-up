@@ -20,7 +20,7 @@ export class Slot {
     constructor(itemID: integer, level: integer) {
         this.itemID = itemID;
         this.level = level;
-        this.count = this.itemDef.uses;
+        this.count = 0;
     }
 
     setCount(count: integer) {
@@ -42,11 +42,20 @@ export class Slot {
                     scale: scale || 1,
                 });
                 iconContainer.add(icon);
+                const levelString = this.level === 0 ? '' : `+${this.level}`
+                title.setText(`${capitalizeFirstLetter(itemDef.name)}${levelString}`);
+                const count = this.count == null ? '' : (this.count === -1 ? '∞' : `x${this.count}`) as string;
+                countLabel.setText(count);
+                if (this.count === -1) {
+                    countLabel.setStyle({ fontSize: 60 });
+                } else {
+                    countLabel.setStyle({ fontSize: 30 });
+                }
+            } else {
+                const levelString = this.level === 0 ? '' : `+${this.level}`
+                title.setText(`${capitalizeFirstLetter(itemDef.name)}${levelString}`);
+                countLabel.setText('');
             }
-            const levelString = this.level === 0 ? '' : `+${this.level}`
-            title.setText(`${capitalizeFirstLetter(itemDef.name)}${levelString}`);
-            const count = this.count == null ? '' : (this.count === -1 ? '∞' : `x${this.count}`) as string;
-            countLabel.setText(count);
         });
     }
 }

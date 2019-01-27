@@ -30,7 +30,12 @@ export class Player extends Phaser.Events.EventEmitter {
     }
 
     addItem(itemID: ItemTypes, level: integer, count?: integer): integer {
-        const slotID = this.slots.findIndex((item) => item.itemID === ItemTypes.EMPTY || item.itemID === itemID);
+        const slotID = this.slots.findIndex((slot) => {
+            return (
+                slot.itemID === ItemTypes.EMPTY ||
+                (slot.itemID === itemID && slot.level === level)
+            );
+        });
 
         let slot = this.slots[slotID];
 
@@ -40,17 +45,21 @@ export class Player extends Phaser.Events.EventEmitter {
         } else {
             // found same item in slot
             slot.level = Math.max(slot.level, level);
-            if (slot.itemDef.uses !== -1 && count != null) slot.count += count;
+            const stackLevel = Math.min(slot.itemDef.maxStack.length - 1, slot.level);
+            if (slot.itemDef.maxStack[stackLevel] !== -1 && count != null) slot.count += count;
         }
         slot = this.slots[slotID];
-        slot.count = Math.min(slot.count, slot.itemDef.maxStack);
+        const stackLevel = Math.min(slot.itemDef.maxStack.length - 1, slot.level);
+        slot.count = Math.min(slot.count, slot.itemDef.maxStack[stackLevel]);
         this.emit(Player.onItemUpdated, slotID);
         return slotID;
     }
 
     consumeItem(slotID: integer) {
-        this.slots[slotID].count--;
-        if (this.slots[slotID].count <= 0 && this.slots[slotID].itemDef.uses !== -1) {
+        const slot = this.slots[slotID];
+        if (slot.count !== -1) slot.count = Math.max(0, slot.count - 1);
+        const stackLevel = Math.min(slot.itemDef.maxStack.length - 1, slot.level);
+        if (slot.count == 0 && slot.itemDef.maxStack[stackLevel] !== -1) {
             this.removeItem(slotID, true);
         }
         this.emit(Player.onItemUpdated, slotID);

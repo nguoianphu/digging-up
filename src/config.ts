@@ -42,8 +42,7 @@ export interface IItemDef {
     name: string;
     types: string[];
     sprites: ISpriteDef[];
-    uses: number;
-    maxStack: number;
+    maxStack: number[];
 }
 
 export enum ItemTypes {

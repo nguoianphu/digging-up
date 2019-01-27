@@ -122,7 +122,7 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     startGame() {
-        const pickSlotID = this.player.addItem(ItemTypes.PICK, 0);
+        const pickSlotID = this.player.addItem(ItemTypes.PICK, 0, -1);
         this.player.addItem(ItemTypes.PLATFORM, 0, 8);
         this.slotButtons.forEach((_, i) => this.updateSlotButton(i));
         this.player.changeActiveSlot(pickSlotID);
@@ -313,7 +313,7 @@ export class MainScene extends Phaser.Scene implements GM {
 
             if (destCell.physicsType === 'solid') {
                 if (activeItem.itemDef.types.includes('mining')) {
-                    worldChanged = this.tryDigCell(destCell, activeItem);
+                    worldChanged = this.tryDigCell(destCell, this.player, activeItem);
                 }
             }
 
@@ -367,7 +367,7 @@ export class MainScene extends Phaser.Scene implements GM {
         }
     }
 
-    tryDigCell(cell: Cell, activeItem: Slot): boolean {
+    tryDigCell(cell: Cell, player: Player, activeItem: Slot): boolean {
 
         let worldChanged = false;
         const blockType = cell.getTopBlock();
@@ -381,6 +381,10 @@ export class MainScene extends Phaser.Scene implements GM {
             if (blockStrength <= itemStrength) {
                 cell.removeTopBlock();
                 worldChanged = true;
+
+                if (blockStrength === itemStrength) {
+                    player.consumeItem(this.player.activeSlotID);
+                }
             }
         }
 

@@ -22,6 +22,7 @@ export enum blockTypes {
     DIRT = 1,
     STONE = 2,
     ROCK = 3,
+    OBSIDIAN=4,
 }
 
 export interface ISolidBlockDef extends IBlockDef {

@@ -13,9 +13,9 @@ export class CardButton extends Phaser.GameObjects.Container {
     countLabel: Text;
     buttonGraphics: CardButtonGraphics;
 
-    constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number) {
+    constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number, pressedCallback: () => void) {
         super(scene, x, y);
-        this.buttonGraphics = new CardButtonGraphics(scene, -w / 2, -h / 2, w, h);
+        this.buttonGraphics = new CardButtonGraphics(scene, -w / 2, -h / 2, w, h, pressedCallback);
         this.add(this.buttonGraphics);
         this.iconContainer = scene.add.container(0, 0);
         this.add(this.iconContainer);
@@ -67,8 +67,9 @@ export class CardButtonGraphics extends Phaser.GameObjects.Graphics {
 
     w: number; h: number;
     isActive: boolean;
+    pressedCallback: () => void;
 
-    constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number) {
+    constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number, pressedCallback: () => void) {
         super(scene, {
             x, y,
             fillStyle: { color: 0xfcfcf9, alpha: 1 },
@@ -96,6 +97,7 @@ export class CardButtonGraphics extends Phaser.GameObjects.Graphics {
         this.on('pointerup', (pointer: Pointer, localX: number, localY: number, evt: EventContext) => {
             console.log('pointerup');
             this.drawUpCard();
+            pressedCallback();
         });
     }
 

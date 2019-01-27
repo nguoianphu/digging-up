@@ -27,22 +27,28 @@ export class Slot {
     }
 
     updateButton(button: CardButton) {
-
         button.updateButtonActive(this.isActive);
         button.updateChildren((scene: Scene, iconContainer: Container, title: Text, countLabel: Text) => {
             const itemDef = this.itemDef;
             iconContainer.removeAll(true);
-            const { key, frame } = itemDef.sprites[this.level];
+            if (this.itemID === ItemType.EMPTY) {
+                title.setText(``);
+                countLabel.setText('');
+            } else {
 
-            const icon = scene.make.image({
-                key, frame,
-                x: 0,
-                y: 0,
-            });
-            iconContainer.add(icon);
-            title.setText(itemDef.name);
-            const count = (this.count === -1 ? '∞' : this.count) as string;
-            countLabel.setText(count);
+                const { key, frame } = itemDef.sprites[this.level];
+
+                const icon = scene.make.image({
+                    key, frame,
+                    x: 0,
+                    y: 0,
+                });
+                iconContainer.add(icon);
+                const levelString = this.level === 0 ? '' : `+${this.level}`
+                title.setText(`${itemDef.name}${levelString}`);
+                const count = (this.count === -1 ? '∞' : this.count) as string;
+                countLabel.setText(count);
+            }
         });
     }
 }

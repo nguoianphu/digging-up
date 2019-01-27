@@ -3,11 +3,12 @@ import { bindAll } from 'lodash';
 import { preload as _preload, setUpAnimations as _setUpAnimations } from '../preload';
 import { EventContext, defaultFont } from '../Utils';
 import { CardButton } from '../UI/CardButton';
-import { Slot, ItemType } from '../player/Item';
+import { Slot, ItemType } from '../world/Item';
 
 import { config, blockTypes, ISolidBlockDef, IMiningItemDef } from '../config';
 import { GM } from '../GM';
-import { Player } from '../player/Player';
+import { Player } from '../world/Player';
+import { CellWorld, Cell } from '../world/CellWorld';
 
 type Pointer = Phaser.Input.Pointer;
 type Container = Phaser.GameObjects.Container;
@@ -22,116 +23,6 @@ interface IMoveKeys {
     left: Phaser.Input.Keyboard.Key,
 }
 
-export class Cell {
-    public name = 'cell';
-    public cellID: integer;
-    public stack: integer[] = [];
-    public physicsType: 'solid' | 'platform' | 'air' = 'solid';
-    constructor(name: string = 'structure', cellID: integer, blockType: blockTypes) {
-        this.name = name;
-        this.cellID = cellID;
-        switch (blockType) {
-            case blockTypes.AIR: {
-                this.stack.push(blockTypes.AIR);
-            } break;
-            case blockTypes.DIRT: {
-                this.stack.push(blockTypes.DIRT);
-            } break;
-            case blockTypes.STONE: {
-                this.stack.push(blockTypes.STONE);
-            } break;
-            case blockTypes.ROCK: {
-                this.stack.push(blockTypes.ROCK);
-            } break;
-            default: {
-                throw new Error(`Unknown blockType: ${blockType}`);
-            }
-        }
-        this.updatePhysicsType();
-    }
-
-
-    getTopBlock(): integer {
-        return this.stack[this.stack.length - 1];
-    }
-
-    addBlock() {
-
-    }
-
-    removeTopBlock() {
-        this.removeBlock(this.stack.length - 1);
-    }
-
-    removeBlock(blockLayerID: integer) {
-        this.stack.splice(blockLayerID, 1);
-        this.updatePhysicsType();
-    }
-
-    updatePhysicsType() {
-        this.physicsType = 'air';
-        this.stack.forEach((blockType: blockTypes) => {
-            const blockDef = config.blocks[blockType];
-            if (blockDef.type === 'solid') {
-                this.physicsType = 'solid';
-            } else if (blockDef.type === 'platform') {
-                this.physicsType = 'platform';
-            } else if (blockDef.type === 'air') {
-                this.physicsType = 'air';
-            }
-        })
-    }
-
-    toString() {
-        return this.name;
-    }
-}
-export class CellWorld {
-    /**
-     * An i,j -coordinate map of map cells.
-     * change to x,y coordinate by `getTransposedMap()`
-     */
-    public map: Cell[][];
-    width: number;
-    height: number;
-    midWidth: number;
-    constructor(width: number, height: number) {
-        let id = 0;
-        this.width = width;
-        this.height = height;
-
-        this.midWidth = width / 2;
-
-        this.map = new Array(height).fill(1)
-            .map((_, i) => new Array(width).fill(1)
-                .map((_, j) => new Cell('Cell', id++, config.blockMap[i][j]))
-            );
-    }
-
-    getTransposedMap(): Cell[][] {
-        return this.transpose(this.map);
-    }
-
-    transpose(map: any[][]) {
-        return map[0].map((col, i) => map.map(row => row[i]));
-    }
-
-    getCell(x: integer, y: integer): Cell {
-        if (!this.map[y]) throw new Error(`cell coord out of bound: (${x},${y})`);
-        if (!this.map[y][x]) throw new Error(`cell coord out of bound: (${x},${y})`);
-        return this.map[y][x];
-    }
-
-    getCells(x: integer, y: integer, w: integer, h: integer) {
-        return new Array(w).fill(1).map((_, i) => {
-            return this.getTransposedMap()[x + i].slice(y, y + h);
-        });
-    }
-
-    toString() {
-        return 'CellWorld';
-    }
-}
 
 
 
@@ -214,8 +105,8 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     startGame() {
-        const addedSlot = this.player.addItem(ItemType.PICK, 0);
-        this.player.changeActiveSlot(addedSlot);
+        const addedSlotID = this.player.addItem(ItemType.PICK, 0);
+        this.player.changeActiveSlot(addedSlotID);
     }
 
     update(time: number, delta: number): void {
@@ -233,7 +124,8 @@ export class MainScene extends Phaser.Scene implements GM {
             return (new CardButton(
                 this,
                 0 + padding + w / 2 + (w + padding) * i, - padding + h / 2,
-                w, h
+                w, h,
+                () => this.onSlotButtonPressed(i)
             ));
         });
         this.buttonContainer.add(this.slotButtons);
@@ -245,6 +137,10 @@ export class MainScene extends Phaser.Scene implements GM {
 
     updateSlotButton(slotID: integer) {
         this.player.slots[slotID].updateButton(this.slotButtons[slotID]);
+    }
+
+    onSlotButtonPressed(slotID: integer) {
+        this.player.changeActiveSlot(slotID);
     }
 
     createJoystick() {
@@ -325,21 +221,35 @@ export class MainScene extends Phaser.Scene implements GM {
         let newCellX = Phaser.Math.Clamp(this.player.cellX + dx, 0, this.cellWorld.width - 1);
         let newCellY = Phaser.Math.Clamp(this.player.cellY + dy, 0, this.cellWorld.height - 1);
 
+        let destCell = this.cellWorld.getCell(newCellX, newCellY);
         if (newCellX === this.player.cellX && newCellY === this.player.cellY) {
             // do something if touch world boundry or decided to not move
-        } else {
-            let destCell = this.cellWorld.getCell(newCellX, newCellY);
+        } else if (destCell) {
+            // interact with cell
             const activeItem = this.player.getActiveSlotItem();
+            let worldChanged = false;
+            let canMove = true;
 
             if (destCell.physicsType === 'solid') {
-
                 if (activeItem.itemDef.types.includes('mining')) {
-                    this.tryDigCell(destCell, activeItem);
+                    worldChanged = this.tryDigCell(destCell, activeItem);
                 }
             }
 
             destCell = this.cellWorld.getCell(newCellX, newCellY);
+
             if (destCell.physicsType === 'solid') {
+                canMove = false;
+                console.log('tryClimbStairs');
+                if (dx !== 0 && dy === 0) {
+                    const aboveCell = this.cellWorld.getCell(newCellX, newCellY - 1);
+                    if (aboveCell && aboveCell.physicsType !== 'solid') {
+                        newCellY = newCellY - 1;
+                        canMove = true;
+                    }
+                }
+            }
+            if (!canMove) {
                 newCellX = this.player.cellX;
                 newCellY = this.player.cellY;
             }
@@ -406,10 +316,11 @@ export class MainScene extends Phaser.Scene implements GM {
                 .removeAll(true)
                 .add(stack.map((blockID) => {
                     const { name, key, frame } = config.blocks[blockID];
+                    if (key === '') return null;
                     return (this.add.image(0, 0, key, frame)
                         .setOrigin(0)
                     );
-                }))
+                }).filter(a => !!a))
             );
         } else {
             const cellContainer = this.add.container(
@@ -417,10 +328,11 @@ export class MainScene extends Phaser.Scene implements GM {
                 config.spriteHeight * yy,
                 stack.map((blockID) => {
                     const { name, key, frame } = config.blocks[blockID];
+                    if (key === '') return null;
                     return (this.add.image(0, 0, key, frame)
                         .setOrigin(0)
                     );
-                })
+                }).filter(a => !!a)
             );
             cellContainer.setData('id', id);
             this.cellContainerBuffer.push(cellContainer);

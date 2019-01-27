@@ -124,8 +124,6 @@ export class MainScene extends Phaser.Scene implements GM {
         if (this.canInput) {
             if (this.inputQueue.direction.x !== 0 || this.inputQueue.direction.y !== 0) {
                 this.movePlayer(this.inputQueue.direction.x, this.inputQueue.direction.y);
-                this.inputQueue.direction.x = 0;
-                this.inputQueue.direction.y = 0;
             }
             if (this.inputQueue.slotInput !== -1) {
                 this.triggerSlot(this.inputQueue.slotInput);
@@ -208,17 +206,8 @@ export class MainScene extends Phaser.Scene implements GM {
             const startY = this.buttonContainer.getData('startY');
             if (!startX) return;
 
-            const dist = Phaser.Math.Distance.Between(startX, startY, upX, upY);
-            const angle = Phaser.Math.Angle.BetweenPoints({ x: startX, y: startY }, { x: upX, y: upY });
-            const dir = angleToDirection(angle, config.controls.directionSnaps) as 0 | 1 | 2 | 3;
+            this.queueMovePlayer(0, 0);
 
-            if (dist < config.controls.minSwipeDist) {
-                console.log('pointerup dist', dist);
-                this.onInputNoAction(dist, angle, dir);
-            } else {
-                console.log('pointerup angle', dir);
-                this.onInputMove(dist, angle, dir);
-            }
             this.buttonContainer.setData('startX', null);
             this.buttonContainer.setData('startY', null);
             this.joyStickArea.clear();
@@ -231,6 +220,17 @@ export class MainScene extends Phaser.Scene implements GM {
             const dist = Phaser.Math.Distance.Between(0, 0, dragX, dragY);
             const angle = Phaser.Math.Angle.BetweenPoints({ x: 0, y: 0 }, { x: dragX, y: dragY });
             const dir = angleToDirection(angle, config.controls.directionSnaps) as 0 | 1 | 2 | 3;
+
+            const a = {
+                0: { x: 1, y: 0 },
+                1: { x: 0, y: 1 },
+                2: { x: -1, y: 0 },
+                3: { x: 0, y: -1 },
+            };
+            const delta: { x: number, y: number } = a[dir];
+
+            this.queueMovePlayer(delta.x, delta.y);
+
             const fingerX = startX + Math.cos(dir * Math.PI / 2) * dist;
             const fingerY = startY + Math.sin(dir * Math.PI / 2) * dist;
             // console.log('drag', dragX, dragY);
@@ -410,15 +410,6 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     onInputMove(dist: number, angle: number, dir: 0 | 1 | 2 | 3) {
-        const a = {
-            0: { x: 1, y: 0 },
-            1: { x: 0, y: 1 },
-            2: { x: -1, y: 0 },
-            3: { x: 0, y: -1 },
-        };
-        const delta: { x: number, y: number } = a[dir];
-
-        this.queueMovePlayer(delta.x, delta.y);
     }
 
     private registerKeyboard(): void {

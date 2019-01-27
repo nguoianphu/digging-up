@@ -5,8 +5,8 @@ config:
   viewHeight: 7
   movementTweenSpeed: 500
   controls:
-    swipeThumbSize: 50
-    minSwipeDist: 30
+    swipeThumbSize: 30
+    minSwipeDist: 50
     directionSnaps: 4
   # 0=air, 1=dirt, 2=ctone, 3=rock
   blockMap:

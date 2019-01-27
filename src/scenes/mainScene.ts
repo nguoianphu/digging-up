@@ -234,6 +234,8 @@ export class MainScene extends Phaser.Scene implements GM {
             // console.log('pointerdown', pointer, localX, localY, evt);
             this.buttonContainer.setData('startX', localX);
             this.buttonContainer.setData('startY', localY);
+            this.joyStickArea.clear();
+            this.joyStickArea.strokeCircle(localX, localY, config.controls.minSwipeDist);
         });
         this.joyStickArea.on('pointerup', (pointer: Pointer, localX: number, localY: number, evt: EventContext) => {
             // console.log('pointerup', pointer, localX, localY, evt);
@@ -251,11 +253,31 @@ export class MainScene extends Phaser.Scene implements GM {
                 console.log('pointerup angle', dir);
                 this.onInputMove(dist, angle, dir);
             }
+            this.joyStickArea.clear();
         });
         this.input.setDraggable(this.joyStickArea);
         this.joyStickArea.on('drag', (pointer: Pointer, dragX: number, dragY: number) => {
-            // console.log('drag', dragX, dragY);
+            const startX = this.buttonContainer.getData('startX');
+            const startY = this.buttonContainer.getData('startY');
 
+            const dist = Phaser.Math.Distance.Between(0, 0, dragX, dragY);
+            const angle = Phaser.Math.Angle.BetweenPoints({ x: 0, y: 0 }, { x: dragX, y: dragY });
+            const dir = angleToDirection(angle, config.controls.directionSnaps) as 0 | 1 | 2 | 3;
+            const fingerX = startX + Math.cos(dir * Math.PI / 2) * dist;
+            const fingerY = startY + Math.sin(dir * Math.PI / 2) * dist;
+            // console.log('drag', dragX, dragY);
+            this.joyStickArea.clear();
+            this.joyStickArea.lineBetween(
+                startX,
+                startY,
+                fingerX,
+                fingerY
+            );
+            if (dist < config.controls.minSwipeDist) {
+                this.joyStickArea.strokeCircle(startX, startY, config.controls.minSwipeDist);
+            } else {
+                this.joyStickArea.strokeCircle(fingerX, fingerY, config.controls.minSwipeDist);
+            }
         });
 
         // this.joyStickArea.clear();
@@ -284,21 +306,22 @@ export class MainScene extends Phaser.Scene implements GM {
 
     updateCells() {
         const viewportX = Phaser.Math.Clamp(this.player.cellX - 2, 0, this.cellWorld.width - config.viewWidth);
-        const viewportY = Phaser.Math.Clamp(this.player.cellY - 2, 0, this.cellWorld.height - config.viewHeight);
+        const viewportY = Phaser.Math.Clamp(this.player.cellY - 3, 0, this.cellWorld.height - config.viewHeight);
 
         const viewCells = this.cellWorld.getCells(viewportX, viewportY, config.viewWidth, config.viewHeight);
         viewCells.forEach((col, xx) => {
-            col.forEach((cell, yy) => this.updateCell(cell, xx, yy));
+            col.forEach((cell, yy) => this.updateCell(cell, viewportX + xx, viewportY + yy));
         });
 
         this.viewportX = viewportX;
         this.viewportY = viewportY;
+        this.tweenView(this.viewportX, this.viewportY);
     }
     updateCell(cell: Cell, xx: number, yy: number): void {
         const { id, stack, name } = cell;
         const bufferedCellContainer = this.cellContainerBuffer.find(c => c.getData('id') === id);
         if (bufferedCellContainer) {
-            // 
+            // do nothing
         } else {
             const cellContainer = this.add.container(
                 config.spriteWidth * xx,
@@ -315,14 +338,16 @@ export class MainScene extends Phaser.Scene implements GM {
             this.view.add(cellContainer);
         }
     }
-    tweenCellContainer(cellContainer: Container, xx: number, yy: number): any {
-        this.add.tween({
-            targets: [cellContainer],
-            x: config.spriteWidth * xx,
-            y: config.spriteHeight * yy,
-            duration: config.movementTweenSpeed,
-
-        })
+    async tweenView(xx: number, yy: number) {
+        await new Promise((resolve, reject) => {
+            this.add.tween({
+                targets: [this.view],
+                x: -(config.spriteWidth * xx),
+                y: -(config.spriteHeight * yy),
+                duration: config.movementTweenSpeed,
+                onComplete: () => resolve()
+            });
+        });
     }
 
     onInputNoAction(dist: number, angle: number, dir: integer) {

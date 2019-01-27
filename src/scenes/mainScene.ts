@@ -51,7 +51,7 @@ export class MainScene extends Phaser.Scene implements GM {
     slotButtons: CardButton[];
     playerSprite: Sprite;
 
-    public inputLock: boolean[] = [];
+    public inputLock: string[] = [];
     get canInput() {
         return this.inputLock.length === 0;
     }
@@ -122,6 +122,12 @@ export class MainScene extends Phaser.Scene implements GM {
 
     update(time: number, delta: number): void {
         if (this.canInput) {
+            this.onInputLockUpdated();
+        }
+    }
+
+    onInputLockUpdated() {
+        if (this.canInput) {
             if (this.inputQueue.direction.x !== 0 || this.inputQueue.direction.y !== 0) {
                 this.movePlayer(this.inputQueue.direction.x, this.inputQueue.direction.y);
             }
@@ -130,6 +136,15 @@ export class MainScene extends Phaser.Scene implements GM {
                 this.inputQueue.slotInput = -1;
             }
         }
+    }
+
+    addInputLock(reason: string) {
+        this.inputLock.push(reason);
+    }
+
+    removeInputLock(reason: string) {
+        this.inputLock.splice(this.inputLock.indexOf(reason), 1);
+        this.onInputLockUpdated();
     }
 
     createSlotButtons() {
@@ -221,31 +236,28 @@ export class MainScene extends Phaser.Scene implements GM {
             const angle = Phaser.Math.Angle.BetweenPoints({ x: 0, y: 0 }, { x: dragX, y: dragY });
             const dir = angleToDirection(angle, config.controls.directionSnaps) as 0 | 1 | 2 | 3;
 
-            const a = {
-                0: { x: 1, y: 0 },
-                1: { x: 0, y: 1 },
-                2: { x: -1, y: 0 },
-                3: { x: 0, y: -1 },
-            };
-            const delta: { x: number, y: number } = a[dir];
-
-            this.queueMovePlayer(delta.x, delta.y);
-
             const fingerX = startX + Math.cos(dir * Math.PI / 2) * dist;
             const fingerY = startY + Math.sin(dir * Math.PI / 2) * dist;
             // console.log('drag', dragX, dragY);
             this.joyStickArea.clear();
-            this.joyStickArea.lineBetween(
-                startX,
-                startY,
-                fingerX,
-                fingerY
-            );
+            // this.joyStickArea.lineBetween(
+            //     startX,
+            //     startY,
+            //     fingerX,
+            //     fingerY
+            // );
+            this.joyStickArea.strokeCircle(startX, startY, config.controls.minSwipeDist);
+            this.joyStickArea.strokeCircle(fingerX, fingerY, config.controls.swipeThumbSize);
             if (dist < config.controls.minSwipeDist) {
-                this.joyStickArea.strokeCircle(startX, startY, config.controls.minSwipeDist);
-                this.joyStickArea.strokeCircle(startX, startY, config.controls.swipeThumbSize);
             } else {
-                this.joyStickArea.strokeCircle(fingerX, fingerY, config.controls.minSwipeDist);
+                const a = {
+                    0: { x: 1, y: 0 },
+                    1: { x: 0, y: 1 },
+                    2: { x: -1, y: 0 },
+                    3: { x: 0, y: -1 },
+                };
+                const delta: { x: number, y: number } = a[dir];
+                this.queueMovePlayer(delta.x, delta.y);
             }
         });
 
@@ -357,9 +369,9 @@ export class MainScene extends Phaser.Scene implements GM {
 
         this.viewportX = viewportX;
         this.viewportY = viewportY;
-        this.inputLock.push(!!1);
+        this.addInputLock('tweenView');
         await this.tweenView(this.viewportX, this.viewportY);
-        this.inputLock.pop();
+        this.removeInputLock('tweenView');
     }
     updateCell(cell: Cell, xx: number, yy: number): void {
         const { cellID: id, stack, name } = cell;

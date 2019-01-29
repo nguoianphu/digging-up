@@ -78,13 +78,18 @@ export class CellWorld {
     midWidth: number;
     scene: MainScene;
     constructor(scene: MainScene, width: number, height: number) {
-        let id = 0;
         this.scene = scene;
+        this.initMap(width, height);
+    }
+
+    initMap(width: number, height: number) {
+
         this.width = width;
         this.height = height;
 
         this.midWidth = width / 2;
 
+        let id = 0;
         this.map = new Array(height).fill(1)
             .map((_, i) => new Array(width).fill(1)
                 .map((_, j) => {
@@ -95,11 +100,11 @@ export class CellWorld {
             );
     }
 
-    loadWorld() {
-        let blockMap = config.blockMap;
-        let sheetMap: { values: string[][] } = null;
-        if (config.useSheetMap && (sheetMap = this.scene.sys.cache.json.get('sheetMap'))) {
-            blockMap = sheetMap.values.map((rows) => rows.map(val => val.startsWith('$') ? val : Number(val)));
+    loadWorld(blockMap: (string | number)[][]) {
+        const mapWidth = blockMap.reduce((acc, col) => Math.max(acc, col.length), 0);
+        const mapHeight = blockMap.length;
+        if (mapWidth !== this.width || mapHeight !== this.height) {
+            this.initMap(mapWidth, mapHeight);
         }
         (this.map
             .forEach((col, i) =>

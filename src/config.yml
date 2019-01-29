@@ -1,5 +1,5 @@
 config:
-  worldCellWidth: 30
+  worldCellWidth: 20
   worldCellHeight: 40
   spriteWidth: 128
   spriteHeight: 128

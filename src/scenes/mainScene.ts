@@ -110,7 +110,13 @@ export class MainScene extends Phaser.Scene implements GM {
                 .play('player_idle')
         ]);
 
-        this.cellWorld.loadWorld();
+
+        let blockMap = config.blockMap;
+        let sheetMap: { values: string[][] } = null;
+        if (config.useSheetMap && (sheetMap = this.sys.cache.json.get('sheetMap'))) {
+            blockMap = sheetMap.values.map((rows) => rows.map(val => val.startsWith('$') ? val : Number(val)));
+        }
+        this.cellWorld.loadWorld(blockMap);
         this.initPlayer(this.cellWorld.midWidth, 0);
         this.initView();
         this.updateCells();

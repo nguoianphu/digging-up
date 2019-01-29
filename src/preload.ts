@@ -1,4 +1,8 @@
+
+
 export function preload(this: Phaser.Scene) {
+    // this.load.json('sheetMap', url);
+    this.load.json('sheetMap','https://sheets.googleapis.com/v4/spreadsheets/1HDSI0MWzxZkxUpwpW3fK1sq2Wg6BawSuiuASgn_RLGI/values/Stage1!A1%3AAD41?key=AIzaSyCEuuqvO7H2jyiIPt2GoWcMqjUa337p3tM');
 
     this.load.image('bg', './assets/publicDomain/paper_texture_cells_light_55327_1280x720.jpg');
 

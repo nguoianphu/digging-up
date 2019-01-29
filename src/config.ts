@@ -9,6 +9,7 @@ export type IConfig = {
     viewHeight: number,
     movementTweenSpeed: number,
     controls: IUIControls;
+    useSheetMap: boolean;
     blockMap: (number | string)[][],
     blocks: { [x: number]: IBlockDef }
     items: { [x: number]: IItemDef }
@@ -85,6 +86,15 @@ export interface IDropEntityDef extends IEntityDef {
         count?: integer;
     }
 }
+
+export interface IChestEntityDef extends IEntityDef {
+    chest: IChestEntityDetailDef;
+}
+interface IChestEntityDetailDef extends ISpriteDef {
+    item: integer;
+    level: integer;
+    count?: integer;
+};
 
 export interface IUIControls {
     swipeThumbSize: number,

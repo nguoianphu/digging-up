@@ -1,4 +1,4 @@
-import { config, IDropEntityDef, IEntityDef } from "../config";
+import { config, IDropEntityDef, IEntityDef, IChestEntityDef } from "../config";
 import { Scene } from "phaser";
 
 
@@ -48,9 +48,9 @@ export abstract class Entity extends Phaser.GameObjects.Container {
 export class DropEntity extends Entity {
 
     public entityDef: IDropEntityDef;
-    constructor(scene: Scene, chestDef: IDropEntityDef, cellX: number, cellY: number) {
-        super(scene, chestDef, cellX, cellY);
-        const { drop } = chestDef;
+    constructor(scene: Scene, dropDef: IDropEntityDef, cellX: number, cellY: number) {
+        super(scene, dropDef, cellX, cellY);
+        const { drop } = dropDef;
 
         const itemDef = config.items[drop.item];
         const level = drop.level;
@@ -66,3 +66,22 @@ export class DropEntity extends Entity {
     }
 
 }
+
+export class ChestEntity extends Entity {
+
+    public entityDef: IDropEntityDef;
+    constructor(scene: Scene, chestDef: IChestEntityDef, cellX: number, cellY: number) {
+        super(scene, chestDef, cellX, cellY);
+        const { chest } = chestDef;
+
+        const chestSprite = scene.make.image({
+            x: config.spriteWidth / 2,
+            y: config.spriteHeight / 4 * 3,
+            key: chest.key,
+            frame: chest.frame,
+        });
+        this.add(chestSprite);
+    }
+
+}
+

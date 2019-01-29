@@ -1,5 +1,5 @@
-import { config, BlockTypes, IEntityDef, IDropEntityDef } from "../config";
-import { Entity, DropEntity } from "./Entity";
+import { config, BlockTypes, IEntityDef, IDropEntityDef, IChestEntityDef } from "../config";
+import { Entity, DropEntity, ChestEntity } from "./Entity";
 import { Scene } from "phaser";
 import { MainScene } from "../scenes/mainScene";
 
@@ -96,10 +96,15 @@ export class CellWorld {
     }
 
     loadWorld() {
+        let blockMap = config.blockMap;
+        let sheetMap: { values: string[][] } = null;
+        if (config.useSheetMap && (sheetMap = this.scene.sys.cache.json.get('sheetMap'))) {
+            blockMap = sheetMap.values.map((rows) => rows.map(val => val.startsWith('$') ? val : Number(val)));
+        }
         (this.map
             .forEach((col, i) =>
                 col.forEach((cell, j) => {
-                    const blockType = config.blockMap[i][j];
+                    const blockType = blockMap[i][j];
 
                     if (typeof blockType === 'string') {
                         const entityID = parseInt(blockType.slice(1), 10);
@@ -153,10 +158,15 @@ export class CellWorld {
     entityFactory(scene: Scene, entityDef: IEntityDef, cellX: number, cellY: number): Entity {
         switch (entityDef.type) {
             case 'drop': {
-                const chestDef = entityDef as IDropEntityDef;
-                return new DropEntity(scene, chestDef, cellX, cellY);
+                const dropDef = entityDef as IDropEntityDef;
+                return new DropEntity(scene, dropDef, cellX, cellY);
+            } break;
+            case 'chest': {
+                const chestDef = entityDef as IChestEntityDef;
+                return new ChestEntity(scene, chestDef, cellX, cellY);
             } break;
             default:
+                throw new Error(`unknown entityDef.type = ${entityDef.type}`)
         }
     }
 

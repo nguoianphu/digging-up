@@ -1,5 +1,5 @@
 config:
-  worldCellWidth: 20
+  worldCellWidth: 30
   worldCellHeight: 40
   spriteWidth: 128
   spriteHeight: 128
@@ -13,6 +13,7 @@ config:
     minSwipeDist: 50
     directionSnaps: 4
   # 0=air, 1=dirt, 2=ctone, 3=rock
+  useSheetMap: true
   blockMap:
     - [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     - [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
@@ -158,6 +159,13 @@ config:
       block:
         builds: 5 #ladder
   entities:
+    0:
+      name: cave
+      type: chest
+      chest:
+        key: 'spritesheet_complete'
+        frame: 'window'
+        size: 4
     1:
       name: drop_pick+1 x10
       type: drop

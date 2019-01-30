@@ -86,7 +86,7 @@ config:
       name: obsidian
       type: solid
       key: 'spritesheet_tiles'
-      frame: 'trunk_white_side'
+      frame: 'snow'
       solid:
         strength: 10
     5:

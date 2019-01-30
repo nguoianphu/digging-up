@@ -7,7 +7,7 @@ type Container = Phaser.GameObjects.Container;
 type Text = Phaser.GameObjects.Text;
 type Scene = Phaser.Scene;
 
-export class Slot {
+export class ItemSlot {
     itemID: integer;
     count: integer;
     level: integer;

@@ -3,13 +3,14 @@ import { bindAll } from 'lodash';
 import { preload as _preload, setUpAnimations as _setUpAnimations } from '../preload';
 import { EventContext, defaultFont } from '../Utils';
 import { CardButton } from '../UI/CardButton';
-import { Slot } from '../world/Item';
+import { ItemSlot } from '../world/Item';
 
 import { config, ItemTypes, BlockTypes, ISolidBlockDef, IMiningItemDef, IBlockDef, IBlockItemDef } from '../config';
 import { GM } from '../GM';
 import { Player } from '../world/Player';
 import { CellWorld, Cell } from '../world/CellWorld';
 import { Entity, DropEntity } from '../world/Entity';
+import { PlaceBlockUI } from '../UI/PlaceBlockUI';
 
 type Pointer = Phaser.Input.Pointer;
 type Container = Phaser.GameObjects.Container;
@@ -39,6 +40,7 @@ export class MainScene extends Phaser.Scene implements GM {
 
     private moveKeys: IMoveKeys;
     private buttonContainer: Container;
+    private placeBlockUI: PlaceBlockUI;
     public view: Container;
 
     private bg: Phaser.GameObjects.Image;
@@ -98,7 +100,15 @@ export class MainScene extends Phaser.Scene implements GM {
         this.player.on(Player.onItemUpdated, (slotID: integer) => this.updateSlotButton(slotID));
         this.player.on(Player.onActiveUpdated, (slotID: integer) => {
             this.deactivateSlotButtons();
-            if (slotID !== -1) this.updateSlotButton(slotID);
+            this.placeBlockUI.disable();
+            if (slotID !== -1) {
+                this.updateSlotButton(slotID);
+
+                const targetSlot = this.player.slots[slotID];
+                if (targetSlot.itemDef.types.includes('block')) {
+                    this.placeBlockUI.enable(this.player, this.viewportX, this.viewportY, targetSlot);
+                }
+            }
         });
 
         this.playerContainer = this.add.container(0, 0, [
@@ -123,6 +133,7 @@ export class MainScene extends Phaser.Scene implements GM {
         this.animatePlayer();
         this.createSlotButtons();
         this.createJoystick();
+        this.createPlaceBlockUI();
 
         this.startGame();
     }
@@ -210,16 +221,16 @@ export class MainScene extends Phaser.Scene implements GM {
 
     triggerSlot(slotID: integer) {
         const targetSlot = this.player.slots[slotID];
+        this.player.toggleActiveSlot(slotID);
         if (targetSlot.itemDef.types.includes('block')) {
-            const blockID = (<IBlockItemDef>this.player.slots[slotID].itemDef).block.builds;
-            const cell = this.cellWorld.getCell(this.player.cellX, this.player.cellY);
-            const success = this.tryAddBlock(cell, blockID);
-            if (success) {
-                this.player.consumeItem(slotID);
-                this.updateCells();
-            }
+            // const blockID = (<IBlockItemDef>this.player.slots[slotID].itemDef).block.builds;
+            // const cell = this.cellWorld.getCell(this.player.cellX, this.player.cellY);
+            // const success = this.tryAddBlock(cell, blockID);
+            // if (success) {
+            //     this.player.consumeItem(slotID);
+            //     this.updateCells();
+            // }
         } else {
-            this.player.toggleActiveSlot(slotID);
         }
     }
 
@@ -300,6 +311,11 @@ export class MainScene extends Phaser.Scene implements GM {
 
     }
 
+    createPlaceBlockUI() {
+        this.placeBlockUI = new PlaceBlockUI(this, this.cellWorld);
+        this.add.existing(this.placeBlockUI);
+    }
+
     queueMovePlayer(dx: integer, dy: integer) {
         this.inputQueue.direction.x = dx;
         this.inputQueue.direction.y = dy;
@@ -374,7 +390,7 @@ export class MainScene extends Phaser.Scene implements GM {
         }
     }
 
-    tryDigCell(cell: Cell, player: Player, activeItem: Slot): boolean {
+    tryDigCell(cell: Cell, player: Player, activeItem: ItemSlot): boolean {
 
         let worldChanged = false;
         const blockType = cell.getTopBlock();

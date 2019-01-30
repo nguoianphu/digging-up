@@ -1,4 +1,4 @@
-import { Slot } from "./Item";
+import { ItemSlot } from "./Item";
 import { ItemTypes } from "../config";
 
 
@@ -7,7 +7,7 @@ export class Player extends Phaser.Events.EventEmitter {
     public cellY: number = 0;
     public oldCellX: number = 0;
     public oldCellY: number = 0;
-    public slots: Slot[] = [];
+    public slots: ItemSlot[] = [];
     public activeSlotID: integer = 0;
     public itemLimit: integer = 4;
     public static onItemUpdated: string = 'onItemUpdated';
@@ -15,7 +15,7 @@ export class Player extends Phaser.Events.EventEmitter {
 
     constructor() {
         super();
-        this.slots = new Array(this.itemLimit).fill(1).map(_ => new Slot(ItemTypes.EMPTY, 0));
+        this.slots = new Array(this.itemLimit).fill(1).map(_ => new ItemSlot(ItemTypes.EMPTY, 0));
     }
 
     getActiveSlotItem() {
@@ -54,7 +54,7 @@ export class Player extends Phaser.Events.EventEmitter {
         let slot = this.slots[slotID];
 
         if (slot.itemID === ItemTypes.EMPTY) {
-            this.slots[slotID] = new Slot(itemID, level);
+            this.slots[slotID] = new ItemSlot(itemID, level);
             if (count != null) this.slots[slotID].setCount(count);
         } else {
             // found same item in slot
@@ -80,7 +80,7 @@ export class Player extends Phaser.Events.EventEmitter {
     }
 
     removeItem(slotID: integer, isSilent: boolean = false) {
-        this.slots[slotID] = new Slot(ItemTypes.EMPTY, 0);
+        this.slots[slotID] = new ItemSlot(ItemTypes.EMPTY, 0);
         if (!isSilent) this.emit(Player.onItemUpdated, slotID);
     }
 }

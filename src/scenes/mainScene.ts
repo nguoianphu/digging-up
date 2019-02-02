@@ -17,6 +17,7 @@ type Container = Phaser.GameObjects.Container;
 type Graphics = Phaser.GameObjects.Graphics;
 type GameObject = Phaser.GameObjects.GameObject;
 type Sprite = Phaser.GameObjects.Sprite;
+type Point = Phaser.Geom.Point;
 
 interface IMoveKeys {
     down: Phaser.Input.Keyboard.Key,
@@ -222,16 +223,6 @@ export class MainScene extends Phaser.Scene implements GM {
     triggerSlot(slotID: integer) {
         const targetSlot = this.player.slots[slotID];
         this.player.toggleActiveSlot(slotID);
-        if (targetSlot.itemDef.types.includes('block')) {
-            // const blockID = (<IBlockItemDef>this.player.slots[slotID].itemDef).block.builds;
-            // const cell = this.cellWorld.getCell(this.player.cellX, this.player.cellY);
-            // const success = this.tryAddBlock(cell, blockID);
-            // if (success) {
-            //     this.player.consumeItem(slotID);
-            //     this.updateCells();
-            // }
-        } else {
-        }
     }
 
     createJoystick() {
@@ -313,6 +304,21 @@ export class MainScene extends Phaser.Scene implements GM {
 
     createPlaceBlockUI() {
         this.placeBlockUI = new PlaceBlockUI(this, this.cellWorld);
+        this.placeBlockUI.on(PlaceBlockUI.onDirectionChosen, (direction: Point) => {
+
+            const { x: dx, y: dy } = direction;
+            const targetSlot = this.player.getActiveSlot();
+            if (targetSlot.itemDef.types.includes('block')) {
+                const blockID = (<IBlockItemDef>targetSlot.itemDef).block.builds;
+                const cell = this.cellWorld.getCell(this.player.cellX + dx, this.player.cellY + dy);
+                const success = this.tryAddBlock(cell, blockID);
+                if (success) {
+                    this.player.consumeItem(this.player.activeSlotID);
+                    this.updateCells();
+                }
+            } else {
+            }
+        })
         this.add.existing(this.placeBlockUI);
     }
 
@@ -330,7 +336,7 @@ export class MainScene extends Phaser.Scene implements GM {
             // do something if touch world boundary or decided to not move
         } else if (destCell) {
             // interact with cell
-            const activeItem = this.player.getActiveSlotItem();
+            const activeItem = this.player.getActiveSlot();
             let worldChanged = false;
             let canMove = true;
 
@@ -470,6 +476,11 @@ export class MainScene extends Phaser.Scene implements GM {
 
         this.viewportX = viewportX;
         this.viewportY = viewportY;
+
+        const activeSlot = this.player.getActiveSlot();;
+        if (this.placeBlockUI && activeSlot && activeSlot.itemDef.types.includes('block')) {
+            this.placeBlockUI.updateButtons(this.player, this.viewportX, this.viewportY, this.player.getActiveSlot());
+        }
 
 
         const playerNeedMove = (

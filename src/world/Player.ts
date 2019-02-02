@@ -18,7 +18,7 @@ export class Player extends Phaser.Events.EventEmitter {
         this.slots = new Array(this.itemLimit).fill(1).map(_ => new ItemSlot(ItemTypes.EMPTY, 0));
     }
 
-    getActiveSlotItem() {
+    getActiveSlot() {
         if (this.activeSlotID === -1) return null;
         return this.slots[this.activeSlotID];
     }

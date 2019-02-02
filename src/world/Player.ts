@@ -1,5 +1,6 @@
 import { ItemSlot } from "./Item";
 import { ItemTypes } from "../config";
+import { DropEntity } from "./Entity";
 
 
 export class Player extends Phaser.Events.EventEmitter {
@@ -9,9 +10,11 @@ export class Player extends Phaser.Events.EventEmitter {
     public oldCellY: number = 0;
     public slots: ItemSlot[] = [];
     public activeSlotID: integer = 0;
+    public tempSlot: DropEntity = null;
     public itemLimit: integer = 4;
     public static onItemUpdated: string = 'onItemUpdated';
     public static onActiveUpdated: string = 'onActiveUpdated';
+    public static onTempSlotUpdated: string = 'onTempSlotUpdated';
 
     constructor() {
         super();
@@ -35,7 +38,7 @@ export class Player extends Phaser.Events.EventEmitter {
         }
         this.emit(Player.onActiveUpdated, this.activeSlotID);
     }
-    
+
     changeActiveSlot(slotID: integer) {
         this.slots[this.activeSlotID].isActive = false;
         this.activeSlotID = slotID;
@@ -82,5 +85,10 @@ export class Player extends Phaser.Events.EventEmitter {
     removeItem(slotID: integer, isSilent: boolean = false) {
         this.slots[slotID] = new ItemSlot(ItemTypes.EMPTY, 0);
         if (!isSilent) this.emit(Player.onItemUpdated, slotID);
+    }
+
+    setTempSlot(dropEntity:DropEntity) {
+        this.tempSlot = dropEntity;
+        this.emit(Player.onTempSlotUpdated);
     }
 }

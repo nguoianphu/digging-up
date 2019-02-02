@@ -11,6 +11,7 @@ import { Player } from '../world/Player';
 import { CellWorld, Cell } from '../world/CellWorld';
 import { Entity, DropEntity } from '../world/Entity';
 import { PlaceBlockUI } from '../UI/PlaceBlockUI';
+import { DropItemUI } from '../UI/DropItemUI';
 
 type Pointer = Phaser.Input.Pointer;
 type Container = Phaser.GameObjects.Container;
@@ -42,6 +43,7 @@ export class MainScene extends Phaser.Scene implements GM {
     private moveKeys: IMoveKeys;
     private buttonContainer: Container;
     private placeBlockUI: PlaceBlockUI;
+    private dropItemUI: DropItemUI;
     public view: Container;
 
     private bg: Phaser.GameObjects.Image;
@@ -135,6 +137,7 @@ export class MainScene extends Phaser.Scene implements GM {
         this.createSlotButtons();
         this.createJoystick();
         this.createPlaceBlockUI();
+        this.createDropItemUI(this.player);
 
         this.startGame();
     }
@@ -322,6 +325,20 @@ export class MainScene extends Phaser.Scene implements GM {
         this.add.existing(this.placeBlockUI);
     }
 
+    createDropItemUI(player: Player) {
+        this.dropItemUI = new DropItemUI(this);
+
+        player.on(Player.onTempSlotUpdated, () => {
+            if (player.tempSlot) {
+                this.dropItemUI.enable(player.tempSlot);
+            } else {
+                this.dropItemUI.disable();
+            }
+        });
+        this.add.existing(this.dropItemUI);
+        this.dropItemUI.disable();
+    }
+
     queueMovePlayer(dx: integer, dy: integer) {
         this.inputQueue.direction.x = dx;
         this.inputQueue.direction.y = dy;
@@ -363,6 +380,8 @@ export class MainScene extends Phaser.Scene implements GM {
             if (!canMove) {
                 newCellX = this.player.cellX;
                 newCellY = this.player.cellY;
+            } else {
+                this.checkTempSlotAndDrop();
             }
         }
 
@@ -380,10 +399,11 @@ export class MainScene extends Phaser.Scene implements GM {
                 const entity = Entity.getEntityByID(entityID);
                 if (entity.type === 'drop') {
                     const dropEntity = entity as DropEntity;
-                    const drop = dropEntity.entityDef.drop;
-                    this.player.addItem(drop.item, drop.level, drop.count);
+                    // this.player.addItem(drop.item, drop.level, drop.count);
                     playerCell.removeEntity(entity);
-                    Entity.destroyEntity(entity);
+                    entity.setVisible(false);
+                    this.player.setTempSlot(dropEntity);
+                    // Entity.destroyEntity(entity);
                 }
             });
         }
@@ -393,6 +413,15 @@ export class MainScene extends Phaser.Scene implements GM {
         const belowCell = this.cellWorld.getCell(this.player.cellX, this.player.cellY + 1);
         if (belowCell.physicsType === 'air' || belowCell.physicsType === 'entity') {
             this.movePlayer(0, 1);
+        }
+    }
+
+    checkTempSlotAndDrop() {
+        const playerCell = this.cellWorld.getCell(this.player.cellX, this.player.cellY);
+        if (this.player.tempSlot !== null) {
+            playerCell.addEntity(this.player.tempSlot);
+            this.player.tempSlot.setVisible(true);
+            this.player.setTempSlot(null);
         }
     }
 

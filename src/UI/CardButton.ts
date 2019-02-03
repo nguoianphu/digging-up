@@ -67,6 +67,7 @@ export class CardButtonGraphics extends Phaser.GameObjects.Graphics {
 
     w: number; h: number;
     isActive: boolean;
+    wasDown: boolean = false;
     pressedCallback: () => void;
 
     constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number, pressedCallback: () => void) {
@@ -79,9 +80,11 @@ export class CardButtonGraphics extends Phaser.GameObjects.Graphics {
         this.w = w;
         this.h = h;
 
-        this.drawUpCard()
+        this.drawUpCard();
 
         this.setInteractive(new Phaser.Geom.Rectangle(0, 0, w, h), Phaser.Geom.Rectangle.Contains);
+
+        this.wasDown = false;
         this.on('pointerover', function (pointer: Pointer, localX: number, localY: number, evt: EventContext) {
             // console.log('pointerover');
             this.drawOverCard();
@@ -93,12 +96,18 @@ export class CardButtonGraphics extends Phaser.GameObjects.Graphics {
         this.on('pointerdown', (pointer: Pointer, localX: number, localY: number, evt: EventContext) => {
             // console.log('pointerdown');
             this.drawDownCard();
+            this.wasDown = true;
         });
         this.on('pointerup', (pointer: Pointer, localX: number, localY: number, evt: EventContext) => {
             // console.log('pointerup');
             this.drawUpCard();
-            pressedCallback();
+            if (this.wasDown) {
+                pressedCallback();
+            }
         });
+        this.scene.input.on('pointerup', () => {
+            this.wasDown = false;
+        })
     }
 
     drawUpCard() {

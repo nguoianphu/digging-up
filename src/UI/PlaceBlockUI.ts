@@ -48,12 +48,20 @@ export class PlaceBlockUI extends Phaser.GameObjects.Container {
                 y: (cellY - viewportY) * h,
             });
 
+            let wasDown = false;
             button.setInteractive(new Phaser.Geom.Rectangle(0, 0, w, h), Phaser.Geom.Rectangle.Contains);
 
+            button.on('pointerdown', (pointer: Pointer, localX: number, localY: number, evt: EventContext) => {
+                // console.log('pointerdown', pointer, localX, localY, evt);
+                wasDown = true;
+            });
             button.on('pointerup', (pointer: Pointer, localX: number, localY: number, evt: EventContext) => {
                 // console.log('pointerdown', pointer, localX, localY, evt);
 
-                this.emit(PlaceBlockUI.onDirectionChosen, new Point(dx, dy));
+                if (wasDown) this.emit(PlaceBlockUI.onDirectionChosen, new Point(dx, dy));
+            });
+            this.scene.input.on('pointerup', () => {
+                wasDown = false;
             });
 
             return button;

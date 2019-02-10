@@ -166,6 +166,8 @@ export class MainScene extends Phaser.Scene implements GM {
 
     doViewUpdate() {
         if (this.viewIsDirty.length > 0) {
+            console.log(`doViewUpdate(reasons:[${this.viewIsDirty.join(',')}])`);
+
             this.viewIsDirty = [];
             this.updateCells();
             this.animatePlayer();
@@ -173,16 +175,25 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     onInputLockUpdated() {
-        if (!this.canInput) return;
+        if (!this.canInput) {
+            this.doViewUpdate();
+            return;
+        }
 
         this.checkEntityAndInteract();
-        if (!this.canInput) return;
+        if (!this.canInput) {
+            this.doViewUpdate();
+            return;
+        }
 
         this.player.oldCellX = this.player.cellX;
         this.player.oldCellY = this.player.cellY;
 
         this.checkFootholdAndFall();
-        if (!this.canInput) return;
+        if (!this.canInput) {
+            this.doViewUpdate();
+            return;
+        }
 
         if (this.inputQueue.direction.x !== 0 || this.inputQueue.direction.y !== 0) {
             this.movePlayer(this.inputQueue.direction.x, this.inputQueue.direction.y);
@@ -196,11 +207,12 @@ export class MainScene extends Phaser.Scene implements GM {
 
     addInputLock(reason: string) {
         this.inputLock.push(reason);
+        console.log(`addInputLock(reason: ${reason}), ${this.inputLock.length}`);
     }
 
     removeInputLock(reason: string) {
         this.inputLock.splice(this.inputLock.indexOf(reason), 1);
-        // console.log(`removeInputLock(reason: ${reason}), ${this.inputLock.length}`);
+        console.log(`removeInputLock(reason: ${reason}), ${this.inputLock.length}`);
         this.onInputLockUpdated();
     }
 
@@ -255,8 +267,6 @@ export class MainScene extends Phaser.Scene implements GM {
         if (from === -1 && to !== -1) { // pick up item
             const fromEntity = this.player.tempDrop;
             const toSlot = this.player.slots[to];
-            const _slot = toSlot.clone();
-            const dropDef = fromEntity.entityDef.drop;
             this.player.addItemToSlotOrSwap(fromEntity, to);
         }
 
@@ -383,6 +393,8 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     movePlayer(dx: integer, dy: integer) {
+        // console.log(`movePlayer(${dx}, ${dy})`, new Error());
+
         let newCellX = Phaser.Math.Clamp(this.player.cellX + dx, 0, this.cellWorld.width - 1);
         let newCellY = Phaser.Math.Clamp(this.player.cellY + dy, 0, this.cellWorld.height - 1);
 
@@ -426,13 +438,15 @@ export class MainScene extends Phaser.Scene implements GM {
         this.player.cellX = newCellX;
         this.player.cellY = newCellY;
 
-        this.viewIsDirty.push('movePlayer');
-        // this.animatePlayer();
+        if (!(this.player.oldCellX === this.player.cellX && this.player.oldCellY === this.player.cellY)) {
+            this.viewIsDirty.push('movePlayer');
+            this.animatePlayer();
+        }
     }
 
     checkEntityAndInteract() {
         const playerCell = this.cellWorld.getCell(this.player.cellX, this.player.cellY);
-        if (playerCell.physicsType === 'entity') {
+        if (playerCell.entityStack.length > 0) {
             playerCell.entityStack.forEach((entityID, i) => {
                 const entity = Entity.getEntityByID(entityID);
                 if (entity.type === 'drop') {
@@ -519,10 +533,15 @@ export class MainScene extends Phaser.Scene implements GM {
                 y: config.spriteHeight * (this.player.cellY - this.viewportY),
                 duration: config.movementTweenSpeed,
                 ease: 'Linear',
-                onStart: () => this.playerSprite.play('player_walk'),
-                // onComplete: () => {
-                // },
+                onStart: () => {
+                    this.playerSprite.play('player_walk');
+                },
+                onComplete: () => {
+                    this.removeInputLock('animatePlayer');
+                },
             });
+            this.addInputLock('animatePlayer');
+
         }
     }
 
@@ -532,7 +551,6 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     async updateCells() {
-
         const viewportX = Phaser.Math.Clamp(this.player.cellX - 2, 0, this.cellWorld.width - config.viewWidth);
         const viewportY = Phaser.Math.Clamp(this.player.cellY - 3, 0, this.cellWorld.height - config.viewHeight);
 

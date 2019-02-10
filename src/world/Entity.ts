@@ -8,7 +8,7 @@ let _entities: Entity[] = [];
 
 export abstract class Entity extends Phaser.GameObjects.Container {
     public entityID: integer = -1;
-    public entityDef: IEntityDef = null;
+    public entityDef: IEntityDef = null; // TODO: make it optional. some entities are from def and some are not
     public name: string = null;
     public type: string = null;
 

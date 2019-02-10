@@ -202,6 +202,15 @@ config:
         level: 2
         itemCount: 999
       
+  credits:
+    - title: Programming
+      names:
+      - Dickson Chui (@vicksonzero)
+    - title: Items Design Contest
+      names:
+      - Amethyst
+      - choiwaikit0613
+      - icebee
 
 
 

@@ -14,6 +14,7 @@ export type IConfig = {
     blocks: { [x: number]: IBlockDef }
     items: { [x: number]: IItemDef }
     entities: { [x: number]: IEntityDef }
+    credits: ICreditEntry[];
 }
 
 export interface ISpriteDef {
@@ -100,6 +101,11 @@ export interface IUIControls {
     swipeThumbSize: number,
     minSwipeDist: number,
     directionSnaps: integer,
+}
+
+export interface ICreditEntry {
+    title: string;
+    names: string[]
 }
 
 const c = require('json-loader!yaml-loader!./config.yml');

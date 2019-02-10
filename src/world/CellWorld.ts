@@ -42,7 +42,10 @@ export class Cell {
     }
 
     removeEntity(entity: Entity) {
-        this.entityStack.splice(this.entityStack.indexOf(entity.entityID));
+        const entityStackIndex = this.entityStack.indexOf(entity.entityID);
+
+        if (entityStackIndex === -1) throw new Error(`removeEntity: entityID not found in stack: ${entity.entityID}`);
+        this.entityStack.splice(entityStackIndex);
         this.updatePhysicsType();
     }
 
@@ -149,9 +152,11 @@ export class CellWorld {
     }
 
     getCell(x: integer, y: integer): Cell {
-        if (!this.map[y]) return null;
-        if (!this.map[y][x]) return null;
-        return this.map[y][x];
+        const i = y;
+        const j = x;
+        if (!this.map[i]) return null;
+        if (!this.map[i][j]) return null;
+        return this.map[i][j];
     }
 
     getCells(x: integer, y: integer, w: integer, h: integer) {
@@ -164,16 +169,17 @@ export class CellWorld {
         switch (entityDef.type) {
             case 'drop': {
                 const dropDef = entityDef as IDropEntityDef;
-                return new DropEntity(scene, dropDef, cellX, cellY);
+                return new DropEntity(scene, this, dropDef, cellX, cellY);
             } break;
             case 'chest': {
                 const chestDef = entityDef as IChestEntityDef;
-                return new ChestEntity(scene, chestDef, cellX, cellY);
+                return new ChestEntity(scene, this, chestDef, cellX, cellY);
             } break;
             default:
                 throw new Error(`unknown entityDef.type = ${entityDef.type}`)
         }
     }
+
 
     toString() {
         return 'CellWorld';

@@ -12,21 +12,23 @@ export class ItemSlot {
     itemCount: integer;
     level: integer;
     isActive: boolean;
+    static INFINITE_ITEM_COUNT = -1;
 
     get itemDef() {
         return config.items[this.itemID];
     }
 
-    constructor(itemID: integer, level: integer) {
+    constructor(itemID: integer, level: integer, itemCount: integer = 0) {
         this.itemID = itemID;
         this.level = level;
-        this.itemCount = 0;
+        this.itemCount = itemCount;
     }
 
     clone() {
         const slot = new ItemSlot(this.itemID, this.level);
         slot.itemCount = this.itemCount;
         slot.isActive = this.isActive;
+        return slot;
     }
 
     setCount(itemCount: integer) {

@@ -10,7 +10,7 @@ export class Player extends Phaser.Events.EventEmitter {
     public oldCellY: number = 0;
     public slots: ItemSlot[] = [];
     public activeSlotID: integer = 0;
-    public tempSlot: DropEntity = null;
+    public tempDrop: DropEntity = null;
     public itemLimit: integer = 4;
     public static onItemUpdated: string = 'onItemUpdated';
     public static onActiveUpdated: string = 'onActiveUpdated';
@@ -72,23 +72,46 @@ export class Player extends Phaser.Events.EventEmitter {
         return slotID;
     }
 
-    
-    addItemToSlotOrSwap(slotID:integer, itemID: ItemTypes, level: integer, itemCount?: integer): integer {
+
+    addItemToSlotOrSwap(fromEntity: DropEntity, slotID: integer): integer {
         let slot = this.slots[slotID];
 
+        const dropSlot = fromEntity.slot;
+        const { itemID, level, itemCount } = dropSlot;
+
         if (slot.itemID !== itemID || slot.level !== level) {
-            this.slots[slotID] = new ItemSlot(itemID, level);
-            if (itemCount != null) this.slots[slotID].setCount(itemCount);
+            // different item
+
+            const leavingSlot = this.slots[slotID].clone();
+            this.slots[slotID] = dropSlot;
+
+            fromEntity.setSlotAndUpdateGraphics(leavingSlot);
+            if (leavingSlot.itemID === ItemTypes.EMPTY) {
+                this.tempDrop = null; // remove picked up entity
+                fromEntity.destroyEntity();
+            }
         } else {
             // found same item in slot
-            slot.level = Math.max(slot.level, level);
+
+            // slot.level = Math.max(slot.level, level); // no need to upgrade now
             const stackLevel = Math.min(slot.itemDef.maxStack.length - 1, slot.level);
-            if (slot.itemDef.maxStack[stackLevel] !== -1 && itemCount != null) slot.itemCount += itemCount;
+            const maxStack = slot.itemDef.maxStack[stackLevel];
+            if (maxStack !== ItemSlot.INFINITE_ITEM_COUNT && itemCount != null) {
+                slot.itemCount += itemCount;
+            }
+            this.tempDrop = null; // remove picked up entity
+            fromEntity.destroyEntity();
         }
+
         slot = this.slots[slotID];
+
+        // limit item count to maxStack
         const stackLevel = Math.min(slot.itemDef.maxStack.length - 1, slot.level);
-        slot.itemCount = Math.min(slot.itemCount, slot.itemDef.maxStack[stackLevel]);
+        const maxStack = slot.itemDef.maxStack[stackLevel];
+        slot.itemCount = Math.min(slot.itemCount, maxStack);
+
         this.emit(Player.onItemUpdated, slotID);
+        this.emit(Player.onTempSlotUpdated);
         return slotID;
     }
 
@@ -108,7 +131,7 @@ export class Player extends Phaser.Events.EventEmitter {
     }
 
     setTempSlot(dropEntity: DropEntity) {
-        this.tempSlot = dropEntity;
+        this.tempDrop = dropEntity;
         this.emit(Player.onTempSlotUpdated);
     }
 }

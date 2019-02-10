@@ -34,10 +34,8 @@ export class DropItemUI extends Phaser.GameObjects.Container {
         this.add(this.button);
     }
     enable(dropEntity: DropEntity) {
-        const drop = dropEntity.entityDef.drop;
-        const fakeSlot: ItemSlot = new ItemSlot(drop.item, drop.level);
-        if (drop.itemCount) fakeSlot.setCount(drop.itemCount);
-        this.drawButton(fakeSlot);
+        const dropSlot = dropEntity.slot;
+        this.drawButton(dropSlot);
         this.setVisible(true);
     }
     disable(): void {

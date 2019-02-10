@@ -1,5 +1,7 @@
 import { config, IDropEntityDef, IEntityDef, IChestEntityDef } from "../config";
 import { Scene } from "phaser";
+import { ItemSlot } from "./Item";
+import { CellWorld } from "./CellWorld";
 
 
 let _entities: Entity[] = [];
@@ -12,6 +14,8 @@ export abstract class Entity extends Phaser.GameObjects.Container {
 
     public cellX: integer;
     public cellY: integer;
+
+    private cellWorld: CellWorld;
 
     public static getEntityID() {
         return _entities.length;
@@ -30,10 +34,11 @@ export abstract class Entity extends Phaser.GameObjects.Container {
     }
 
 
-    constructor(scene: Scene, entityDef: IEntityDef, cellX: number, cellY: number) {
+    constructor(scene: Scene, cellWorld: CellWorld, entityDef: IEntityDef, cellX: number, cellY: number) {
         super(scene, cellX * config.spriteWidth, cellY * config.spriteHeight);
         this.cellX = cellX;
         this.cellY = cellY;
+        this.cellWorld = cellWorld;
         this.entityID = Entity.getEntityID();
         _entities.push(this);
 
@@ -43,41 +48,51 @@ export abstract class Entity extends Phaser.GameObjects.Container {
         this.type = type;
     }
 
+    destroyEntity() {
+        // this.cellWorld.removeEntity(this.cellX, this.cellY, this);
+        Entity.destroyEntity(this);
+
+        this.destroy();
+    }
+
 }
 
 export class DropEntity extends Entity {
 
     public entityDef: IDropEntityDef;
-    public item: integer;
-    public level: integer;
-    public itemCount: integer;
-    constructor(scene: Scene, dropDef: IDropEntityDef, cellX: number, cellY: number) {
-        super(scene, dropDef, cellX, cellY);
+    public slot: ItemSlot = null;
+
+    constructor(scene: Scene, cellWorld: CellWorld, dropDef: IDropEntityDef, cellX: number, cellY: number) {
+        super(scene, cellWorld, dropDef, cellX, cellY);
         const { drop } = dropDef;
+        const { item, level, itemCount } = drop;
 
-        this.item= drop.item;
-        this.level= drop.level;
-        this.itemCount= drop.itemCount;
+        this.setSlotAndUpdateGraphics(new ItemSlot(item, level, itemCount));
+    }
 
-        const itemDef = config.items[this.item];
+    setSlotAndUpdateGraphics(slot: ItemSlot) {
+        this.slot = slot;
 
-        const itemIcon = scene.make.image({
+        const itemDef = config.items[this.slot.itemID];
+
+        this.removeAll(true);
+
+        const itemIcon = this.scene.make.image({
             x: config.spriteWidth / 2,
             y: config.spriteHeight / 4 * 3,
-            key: itemDef.sprites[this.level].key,
-            frame: itemDef.sprites[this.level].frame,
+            key: itemDef.sprites[this.slot.level].key,
+            frame: itemDef.sprites[this.slot.level].frame,
             scale: 0.5,
         });
         this.add(itemIcon);
     }
-
 }
 
 export class ChestEntity extends Entity {
 
     public entityDef: IDropEntityDef;
-    constructor(scene: Scene, chestDef: IChestEntityDef, cellX: number, cellY: number) {
-        super(scene, chestDef, cellX, cellY);
+    constructor(scene: Scene, cellWorld: CellWorld, chestDef: IChestEntityDef, cellX: number, cellY: number) {
+        super(scene, cellWorld, chestDef, cellX, cellY);
         const { chest } = chestDef;
 
         const chestSprite = scene.make.image({

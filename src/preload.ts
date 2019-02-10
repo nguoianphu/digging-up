@@ -2,7 +2,7 @@
 
 export function preload(this: Phaser.Scene) {
     // this.load.json('sheetMap', url);
-    this.load.json('sheetMap','https://sheets.googleapis.com/v4/spreadsheets/1HDSI0MWzxZkxUpwpW3fK1sq2Wg6BawSuiuASgn_RLGI/values/Stage1!A1%3AAD41?key=AIzaSyCEuuqvO7H2jyiIPt2GoWcMqjUa337p3tM');
+    this.load.json('sheetMap', 'https://sheets.googleapis.com/v4/spreadsheets/1HDSI0MWzxZkxUpwpW3fK1sq2Wg6BawSuiuASgn_RLGI/values/Stage1!A1%3AAD41?key=AIzaSyCEuuqvO7H2jyiIPt2GoWcMqjUa337p3tM');
 
     this.load.image('bg', './assets/publicDomain/paper_texture_cells_light_55327_1280x720.jpg');
 
@@ -18,6 +18,16 @@ export function preload(this: Phaser.Scene) {
         './assets/kenney/voxel-pack/spritesheet_tiles.png',
         './assets/kenney/voxel-pack/spritesheet_tiles.xml'
     );
+    this.load.spritesheet('simplified_platformer',
+        './assets/kenney/kenney_simplifiedplatformer/platformPack_tilesheet@2.png',
+        {
+            frameWidth: 128,
+            // frameHeight:16,
+            spacing: 0,
+            margin: 0,
+            endFrame: 14 * 7,
+        }
+    );
     this.load.spritesheet('platformer_redux',
         './assets/kenney/platformer-art-pixel-redux/spritesheet.png',
         {
@@ -26,7 +36,6 @@ export function preload(this: Phaser.Scene) {
             spacing: 2,
             margin: 0,
             endFrame: 30 * 30,
-
         }
     );
     this.load.spritesheet('platformercharacters_Player',

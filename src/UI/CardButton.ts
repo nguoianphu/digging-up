@@ -19,16 +19,16 @@ export class CardButton extends Phaser.GameObjects.Container {
         this.cardButtonID = id;
         this.buttonGraphics = new CardButtonGraphics(scene, -w / 2, -h / 2, w, h, pressedCallback);
         this.add(this.buttonGraphics);
-        this.add(this.scene.add.zone(
-            0, 0,
-            w, h
-        ).setRectangleDropZone(w, h).setData('zoneID', id));
+        // this.add(this.scene.add.zone(
+        //     0, 0,
+        //     w, h
+        // ).setRectangleDropZone(w, h).setData('zoneID', id));
         this.iconContainer = scene.add.container(0, 0);
         this.add(this.iconContainer);
 
 
-        this.iconContainer.setInteractive(new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h), Phaser.Geom.Rectangle.Contains);
-        this.scene.input.setDraggable(this.iconContainer);
+        // this.iconContainer.setInteractive(new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h), Phaser.Geom.Rectangle.Contains);
+        // this.scene.input.setDraggable(this.iconContainer);
         // this.iconContainer.disableInteractive();
         let isDragging = false;
         // var zone = this.add.zone(500, 300, 300, 300).setRectangleDropZone(300, 300);
@@ -124,7 +124,7 @@ export class CardButtonGraphics extends Phaser.GameObjects.Graphics {
 
         this.wasDown = false;
         this.on('pointerover', function (pointer: Pointer, localX: number, localY: number, evt: EventContext) {
-            // console.log('pointerover');
+            console.log('pointerover');
             this.drawOverCard();
         });
         this.on('pointerout', function (pointer: Pointer, evt: EventContext) {

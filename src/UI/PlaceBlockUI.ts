@@ -102,15 +102,18 @@ export class PlaceBlockUI extends Phaser.GameObjects.Container {
         const { builds } = itemDef.block;
 
         const canBuild = (cell.physicsType === 'air'); // TODO: call a canBuild() method
-        const color = canBuild ? 0x00FF00 : 0xFF0000;
 
-        const buttonGraphics = this.scene.make.graphics({
-            x: 0, y: 0,
-            fillStyle: { color: color, alpha: 0.1 },
-            lineStyle: { width: 5, color: color, alpha: 1 },
-        });
-        buttonGraphics.fillRect(0, 0, w, h);
-        buttonGraphics.strokeRect(0, 0, w, h);
+        // const color = canBuild ? 0x00FF00 : 0xFF0000;
+        // const buttonGraphics = this.scene.make.graphics({
+        //     x: 0, y: 0,
+        //     fillStyle: { color: color, alpha: 0.1 },
+        //     lineStyle: { width: 5, color: color, alpha: 1 },
+        // });
+        // buttonGraphics.fillRect(0, 0, w, h);
+        // buttonGraphics.strokeRect(0, 0, w, h);
+
+        const color = canBuild ? 22 : 33; // 47
+        const buttonGraphics = this.scene.add.image(0, 0, 'simplified_platformer', color).setOrigin(0);
         button.add(buttonGraphics);
     }
 }

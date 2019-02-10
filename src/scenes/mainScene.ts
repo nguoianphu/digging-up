@@ -379,8 +379,12 @@ export class MainScene extends Phaser.Scene implements GM {
         player.on(Player.onTempSlotUpdated, () => {
             if (player.tempDrop) {
                 this.dropItemUI.enable(player.tempDrop);
+                this.dropItemUI.button.toggleDrag(true);
+                this.slotButtons.forEach((button) => button.toggleDrag(true));
             } else {
                 this.dropItemUI.disable();
+                this.dropItemUI.button.toggleDrag(false);
+                this.slotButtons.forEach((button) => button.toggleDrag(false));
             }
         });
         this.add.existing(this.dropItemUI);

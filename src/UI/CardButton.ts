@@ -13,23 +13,32 @@ export class CardButton extends Phaser.GameObjects.Container {
     title: Text;
     countLabel: Text;
     buttonGraphics: CardButtonGraphics;
+    dropZone: Phaser.GameObjects.Zone;
 
     constructor(scene: Phaser.Scene, id: integer, x: number, y: number, w: number, h: number, pressedCallback: () => void, droppedCallback: (droppedZoneID: integer) => void) {
         super(scene, x, y);
         this.cardButtonID = id;
+
         this.buttonGraphics = new CardButtonGraphics(scene, -w / 2, -h / 2, w, h, pressedCallback);
         this.add(this.buttonGraphics);
-        // this.add(this.scene.add.zone(
-        //     0, 0,
-        //     w, h
-        // ).setRectangleDropZone(w, h).setData('zoneID', id));
+
+        this.dropZone = this.scene.add.zone(
+            0, 0,
+            w, h
+        ).setRectangleDropZone(w, h)
+            .setData('zoneID', id);
+        this.add(this.dropZone);
+
         this.iconContainer = scene.add.container(0, 0);
         this.add(this.iconContainer);
 
 
-        // this.iconContainer.setInteractive(new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h), Phaser.Geom.Rectangle.Contains);
-        // this.scene.input.setDraggable(this.iconContainer);
-        // this.iconContainer.disableInteractive();
+        this.iconContainer.setInteractive(new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h), Phaser.Geom.Rectangle.Contains);
+        this.scene.input.setDraggable(this.iconContainer);
+
+        this.iconContainer.disableInteractive();
+        this.dropZone.disableInteractive();
+
         let isDragging = false;
         // var zone = this.add.zone(500, 300, 300, 300).setRectangleDropZone(300, 300);
         this.iconContainer.on('drag', (pointer: Pointer, dragX: number, dragY: number) => {
@@ -94,6 +103,19 @@ export class CardButton extends Phaser.GameObjects.Container {
 
         this.buttonGraphics.isActive = isActive;
         this.buttonGraphics.drawUpCard();
+    }
+
+    toggleDrag(val?: boolean) {
+        if (val == null) {
+            val = !this.iconContainer.input.enabled;
+        }
+        if (val) {
+            this.iconContainer.setInteractive();
+            this.dropZone.setInteractive();
+        } else {
+            this.iconContainer.disableInteractive();
+            this.dropZone.disableInteractive();
+        }
     }
 }
 

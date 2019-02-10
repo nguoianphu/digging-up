@@ -203,14 +203,23 @@ config:
         itemCount: 999
       
   credits:
-    - title: Programming
+    - title: Game Design, Programming
       names:
-      - Dickson Chui (@vicksonzero)
-    - title: Items Design Contest
+        - Dickson Chui (@vicksonzero)
+    - title: Majority of Graphics; Art style
       names:
-      - Amethyst
-      - choiwaikit0613
-      - icebee
+        - kenney.nl
+    - title: Graphics
+      names:
+        - Dickson Chui
+    - title: Music / Sound
+      names:
+        - none yet
+    - title: Items Design Ideas
+      names:
+        - Amethyst
+        - choiwaikit0613
+        - icebee
 
 
 

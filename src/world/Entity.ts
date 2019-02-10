@@ -48,18 +48,24 @@ export abstract class Entity extends Phaser.GameObjects.Container {
 export class DropEntity extends Entity {
 
     public entityDef: IDropEntityDef;
+    public item: integer;
+    public level: integer;
+    public itemCount: integer;
     constructor(scene: Scene, dropDef: IDropEntityDef, cellX: number, cellY: number) {
         super(scene, dropDef, cellX, cellY);
         const { drop } = dropDef;
 
-        const itemDef = config.items[drop.item];
-        const level = drop.level;
+        this.item= drop.item;
+        this.level= drop.level;
+        this.itemCount= drop.itemCount;
+
+        const itemDef = config.items[this.item];
 
         const itemIcon = scene.make.image({
             x: config.spriteWidth / 2,
             y: config.spriteHeight / 4 * 3,
-            key: itemDef.sprites[level].key,
-            frame: itemDef.sprites[level].frame,
+            key: itemDef.sprites[this.level].key,
+            frame: itemDef.sprites[this.level].frame,
             scale: 0.5,
         });
         this.add(itemIcon);

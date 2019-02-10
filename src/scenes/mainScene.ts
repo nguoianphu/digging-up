@@ -202,10 +202,11 @@ export class MainScene extends Phaser.Scene implements GM {
 
         this.slotButtons = new Array(4).fill(1).map((_, i) => {
             return (new CardButton(
-                this,
+                this, i,
                 0 + padding + w / 2 + (w + padding) * i, - padding + h / 2,
                 w, h,
-                () => this.onSlotButtonPressed(i)
+                () => this.onSlotButtonPressed(i),
+                (droppedZoneID: number) => this.onItemDragDropped(i, droppedZoneID)
             ));
         });
         this.buttonContainer.add(this.slotButtons);
@@ -226,6 +227,27 @@ export class MainScene extends Phaser.Scene implements GM {
     triggerSlot(slotID: integer) {
         const targetSlot = this.player.slots[slotID];
         this.player.toggleActiveSlot(slotID);
+    }
+
+    onItemDragDropped(from: integer, to: integer) {
+        console.log('onItemDragDropped', from, to);
+        if (from === -1) {
+            const toSlot = this.player.slots[to];
+
+        }
+        const fromSlot = (from === -1 ? this.player.tempSlot : this.player.slots[from]);
+        const toSlot = (to === -1 ? this.player.tempSlot : this.player.slots[to]);
+        if (fromSlot === toSlot) return;
+
+        if (from === -1 && to !== -1) {
+            const fromEntity = this.player.tempSlot;
+            const toSlot = this.player.slots[to];
+            const _slot = toSlot.clone();
+            const dropDef = fromEntity.entityDef.drop;
+            this.player.addItemToSlotOrSwap(to, dropDef.item, dropDef.level, dropDef.itemCount);
+        }
+        // const _slot = fromSlot.clone();
+        // fromSlot.
     }
 
     createJoystick() {
@@ -399,7 +421,7 @@ export class MainScene extends Phaser.Scene implements GM {
                 const entity = Entity.getEntityByID(entityID);
                 if (entity.type === 'drop') {
                     const dropEntity = entity as DropEntity;
-                    // this.player.addItem(drop.item, drop.level, drop.count);
+                    // this.player.addItem(drop.item, drop.level, drop.itemCount);
                     playerCell.removeEntity(entity);
                     entity.setVisible(false);
                     this.player.setTempSlot(dropEntity);

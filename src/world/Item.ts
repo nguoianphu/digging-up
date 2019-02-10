@@ -9,7 +9,7 @@ type Scene = Phaser.Scene;
 
 export class ItemSlot {
     itemID: integer;
-    count: integer;
+    itemCount: integer;
     level: integer;
     isActive: boolean;
 
@@ -20,11 +20,17 @@ export class ItemSlot {
     constructor(itemID: integer, level: integer) {
         this.itemID = itemID;
         this.level = level;
-        this.count = 0;
+        this.itemCount = 0;
     }
 
-    setCount(count: integer) {
-        this.count = count;
+    clone() {
+        const slot = new ItemSlot(this.itemID, this.level);
+        slot.itemCount = this.itemCount;
+        slot.isActive = this.isActive;
+    }
+
+    setCount(itemCount: integer) {
+        this.itemCount = itemCount;
     }
 
     updateButton(button: CardButton) {
@@ -44,9 +50,9 @@ export class ItemSlot {
                 iconContainer.add(icon);
                 const levelString = this.level === 0 ? '' : `+${this.level}`
                 title.setText(`${capitalizeFirstLetter(itemDef.name)}${levelString}`);
-                const count = this.count == null ? '' : (this.count === -1 ? '∞' : `x${this.count}`) as string;
-                countLabel.setText(count);
-                if (this.count === -1) {
+                const itemCount = this.itemCount == null ? '' : (this.itemCount === -1 ? '∞' : `x${this.itemCount}`) as string;
+                countLabel.setText(itemCount);
+                if (this.itemCount === -1) {
                     countLabel.setStyle({ fontSize: 60 });
                 } else {
                     countLabel.setStyle({ fontSize: 30 });

@@ -172,14 +172,14 @@ config:
       drop:
         item: 1
         level: 1
-        count: 10
+        itemCount: 10
     2:
       name: drop_platform x8
       type: drop
       drop:
         item: 4
         level: 0
-        count: 8
+        itemCount: 8
     3:
       name: chest+4
       type: chest
@@ -193,14 +193,14 @@ config:
       drop:
         item: 1
         level: 2
-        count: 10
+        itemCount: 10
     5:
       name: drop_pick+2 x999
       type: drop
       drop:
         item: 1
         level: 2
-        count: 999
+        itemCount: 999
       
 
 

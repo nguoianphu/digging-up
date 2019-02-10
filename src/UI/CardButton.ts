@@ -8,17 +8,55 @@ type Scene = Phaser.Scene;
 import { EventContext, defaultFont } from '../Utils';
 
 export class CardButton extends Phaser.GameObjects.Container {
+    cardButtonID: integer;
     iconContainer: Container;
     title: Text;
     countLabel: Text;
     buttonGraphics: CardButtonGraphics;
 
-    constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number, pressedCallback: () => void) {
+    constructor(scene: Phaser.Scene, id: integer, x: number, y: number, w: number, h: number, pressedCallback: () => void, droppedCallback: (droppedZoneID: integer) => void) {
         super(scene, x, y);
+        this.cardButtonID = id;
         this.buttonGraphics = new CardButtonGraphics(scene, -w / 2, -h / 2, w, h, pressedCallback);
         this.add(this.buttonGraphics);
+        this.add(this.scene.add.zone(
+            0, 0,
+            w, h
+        ).setRectangleDropZone(w, h).setData('zoneID', id));
         this.iconContainer = scene.add.container(0, 0);
         this.add(this.iconContainer);
+
+
+        this.iconContainer.setInteractive(new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h), Phaser.Geom.Rectangle.Contains);
+        this.scene.input.setDraggable(this.iconContainer);
+        // this.iconContainer.disableInteractive();
+        let isDragging = false;
+        // var zone = this.add.zone(500, 300, 300, 300).setRectangleDropZone(300, 300);
+        this.iconContainer.on('drag', (pointer: Pointer, dragX: number, dragY: number) => {
+            const { dragStartX, dragStartY } = this.iconContainer.input;
+            if (isDragging || Phaser.Math.Distance.Between(dragStartX, dragStartY, dragX, dragY) > 60) {
+                this.iconContainer.x = dragX;
+                this.iconContainer.y = dragY;
+                isDragging = true;
+            }
+        });
+
+        this.iconContainer.on('dragend', (pointer: Pointer, dragX: number, dragY: number, dropped: boolean) => {
+            if (!dropped) {
+                this.iconContainer.x = this.iconContainer.input.dragStartX;
+                this.iconContainer.y = this.iconContainer.input.dragStartY;
+            }
+        });
+
+        this.iconContainer.on('drop', (pointer: Pointer, zone: Phaser.GameObjects.Zone) => {
+            console.log('dropped', zone.getData('zoneID'));
+
+            droppedCallback(zone.getData('zoneID'));
+
+            this.iconContainer.x = this.iconContainer.input.dragStartX;
+            this.iconContainer.y = this.iconContainer.input.dragStartY;
+            isDragging = false;
+        });
 
         this.title = scene.make.text({
             x: 0, y: 50,

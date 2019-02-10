@@ -83,7 +83,7 @@ export interface IDropEntityDef extends IEntityDef {
     drop: {
         item: integer;
         level: integer;
-        count?: integer;
+        itemCount?: integer;
     }
 }
 
@@ -93,7 +93,7 @@ export interface IChestEntityDef extends IEntityDef {
 interface IChestEntityDetailDef extends ISpriteDef {
     item: integer;
     level: integer;
-    count?: integer;
+    itemCount?: integer;
 };
 
 export interface IUIControls {

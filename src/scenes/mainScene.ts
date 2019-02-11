@@ -270,6 +270,12 @@ export class MainScene extends Phaser.Scene implements GM {
             this.player.addItemToSlotOrSwap(fromEntity, to);
         }
 
+        if (from !== -1 && to === -1) { // pick up item
+            const fromSlot = this.player.slots[to];
+            const toEntity = this.player.tempDrop;
+            this.player.dropItemOrSwap(from, toEntity);
+        }
+
         this.viewIsDirty.push('onItemDragDropped');
         // const _slot = fromSlot.clone();
         // fromSlot.

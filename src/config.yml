@@ -13,6 +13,7 @@ config:
     minSwipeDist: 50
     directionSnaps: 4
   # 0=air, 1=dirt, 2=ctone, 3=rock
+  useSheetMap: true
   blockMap:
     - [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     - [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
@@ -85,7 +86,7 @@ config:
       name: obsidian
       type: solid
       key: 'spritesheet_tiles'
-      frame: 'trunk_white_side'
+      frame: 'snow'
       solid:
         strength: 10
     5:
@@ -158,20 +159,27 @@ config:
       block:
         builds: 5 #ladder
   entities:
+    0:
+      name: cave
+      type: chest
+      chest:
+        key: 'spritesheet_complete'
+        frame: 'window'
+        size: 4
     1:
       name: drop_pick+1 x10
       type: drop
       drop:
         item: 1
         level: 1
-        count: 10
+        itemCount: 10
     2:
       name: drop_platform x8
       type: drop
       drop:
         item: 4
         level: 0
-        count: 8
+        itemCount: 8
     3:
       name: chest+4
       type: chest
@@ -185,15 +193,33 @@ config:
       drop:
         item: 1
         level: 2
-        count: 10
+        itemCount: 10
     5:
       name: drop_pick+2 x999
       type: drop
       drop:
         item: 1
         level: 2
-        count: 999
+        itemCount: 999
       
+  credits:
+    - title: Game Design, Programming
+      names:
+        - Dickson Chui (@vicksonzero)
+    - title: Majority of Graphics; Art style
+      names:
+        - kenney.nl
+    - title: Graphics
+      names:
+        - Dickson Chui
+    - title: Music / Sound
+      names:
+        - none yet
+    - title: Items Design Ideas
+      names:
+        - Amethyst
+        - choiwaikit0613
+        - icebee
 
 
 

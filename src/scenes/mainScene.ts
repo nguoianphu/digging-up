@@ -3,19 +3,22 @@ import { bindAll } from 'lodash';
 import { preload as _preload, setUpAnimations as _setUpAnimations } from '../preload';
 import { EventContext, defaultFont } from '../Utils';
 import { CardButton } from '../UI/CardButton';
-import { Slot } from '../world/Item';
+import { ItemSlot } from '../world/Item';
 
 import { config, ItemTypes, BlockTypes, ISolidBlockDef, IMiningItemDef, IBlockDef, IBlockItemDef } from '../config';
 import { GM } from '../GM';
 import { Player } from '../world/Player';
 import { CellWorld, Cell } from '../world/CellWorld';
 import { Entity, DropEntity } from '../world/Entity';
+import { PlaceBlockUI } from '../UI/PlaceBlockUI';
+import { DropItemUI } from '../UI/DropItemUI';
 
 type Pointer = Phaser.Input.Pointer;
 type Container = Phaser.GameObjects.Container;
 type Graphics = Phaser.GameObjects.Graphics;
 type GameObject = Phaser.GameObjects.GameObject;
 type Sprite = Phaser.GameObjects.Sprite;
+type Point = Phaser.Geom.Point;
 
 interface IMoveKeys {
     down: Phaser.Input.Keyboard.Key,
@@ -39,6 +42,8 @@ export class MainScene extends Phaser.Scene implements GM {
 
     private moveKeys: IMoveKeys;
     private buttonContainer: Container;
+    private placeBlockUI: PlaceBlockUI;
+    private dropItemUI: DropItemUI;
     public view: Container;
 
     private bg: Phaser.GameObjects.Image;
@@ -53,6 +58,7 @@ export class MainScene extends Phaser.Scene implements GM {
     playerSprite: Sprite;
 
     public inputLock: string[] = [];
+    private viewIsDirty: string[] = [];
     get canInput() {
         return this.inputLock.length === 0;
     }
@@ -98,7 +104,15 @@ export class MainScene extends Phaser.Scene implements GM {
         this.player.on(Player.onItemUpdated, (slotID: integer) => this.updateSlotButton(slotID));
         this.player.on(Player.onActiveUpdated, (slotID: integer) => {
             this.deactivateSlotButtons();
-            if (slotID !== -1) this.updateSlotButton(slotID);
+            this.placeBlockUI.disable();
+            if (slotID !== -1) {
+                this.updateSlotButton(slotID);
+
+                const targetSlot = this.player.slots[slotID];
+                if (targetSlot.itemDef.types.includes('block')) {
+                    this.placeBlockUI.enable(this.player, this.viewportX, this.viewportY, targetSlot);
+                }
+            }
         });
 
         this.playerContainer = this.add.container(0, 0, [
@@ -110,19 +124,27 @@ export class MainScene extends Phaser.Scene implements GM {
                 .play('player_idle')
         ]);
 
-        this.cellWorld.loadWorld();
+
+        let blockMap = config.blockMap;
+        let sheetMap: { values: string[][] } = null;
+        if (config.useSheetMap && (sheetMap = this.sys.cache.json.get('sheetMap'))) {
+            blockMap = sheetMap.values.map((rows) => rows.map(val => val.startsWith('$') ? val : Number(val)));
+        }
+        this.cellWorld.loadWorld(blockMap);
         this.initPlayer(this.cellWorld.midWidth, 0);
         this.initView();
         this.updateCells();
         this.animatePlayer();
         this.createSlotButtons();
         this.createJoystick();
+        this.createPlaceBlockUI();
+        this.createDropItemUI(this.player);
 
         this.startGame();
     }
 
     startGame() {
-        const pickSlotID = this.player.addItem(ItemTypes.PICK, 0, -1);
+        const pickSlotID = this.player.addItem(ItemTypes.PICK, 0, ItemSlot.INFINITE_ITEM_COUNT);
         this.player.addItem(ItemTypes.PLATFORM, 0, 8);
         this.slotButtons.forEach((_, i) => this.updateSlotButton(i));
         this.player.changeActiveSlot(pickSlotID);
@@ -131,6 +153,7 @@ export class MainScene extends Phaser.Scene implements GM {
     update(time: number, delta: number): void {
         if (this.canInput) {
             this.onInputLockUpdated();
+            this.doViewUpdate();
             const playerNeedMove = (
                 this.player.oldCellX !== this.player.cellX ||
                 this.player.oldCellY !== this.player.cellY
@@ -141,17 +164,36 @@ export class MainScene extends Phaser.Scene implements GM {
         }
     }
 
+    doViewUpdate() {
+        if (this.viewIsDirty.length > 0) {
+            console.log(`doViewUpdate(reasons:[${this.viewIsDirty.join(',')}])`);
+
+            this.viewIsDirty = [];
+            this.updateCells();
+            this.animatePlayer();
+        }
+    }
+
     onInputLockUpdated() {
-        if (!this.canInput) return;
+        if (!this.canInput) {
+            this.doViewUpdate();
+            return;
+        }
 
         this.checkEntityAndInteract();
-        if (!this.canInput) return;
+        if (!this.canInput) {
+            this.doViewUpdate();
+            return;
+        }
 
         this.player.oldCellX = this.player.cellX;
         this.player.oldCellY = this.player.cellY;
 
         this.checkFootholdAndFall();
-        if (!this.canInput) return;
+        if (!this.canInput) {
+            this.doViewUpdate();
+            return;
+        }
 
         if (this.inputQueue.direction.x !== 0 || this.inputQueue.direction.y !== 0) {
             this.movePlayer(this.inputQueue.direction.x, this.inputQueue.direction.y);
@@ -160,15 +202,17 @@ export class MainScene extends Phaser.Scene implements GM {
             this.triggerSlot(this.inputQueue.slotInput);
             this.inputQueue.slotInput = -1;
         }
+        this.doViewUpdate();
     }
 
     addInputLock(reason: string) {
         this.inputLock.push(reason);
+        console.log(`addInputLock(reason: ${reason}), ${this.inputLock.length}`);
     }
 
     removeInputLock(reason: string) {
         this.inputLock.splice(this.inputLock.indexOf(reason), 1);
-        // console.log(`removeInputLock(reason: ${reason}), ${this.inputLock.length}`);
+        console.log(`removeInputLock(reason: ${reason}), ${this.inputLock.length}`);
         this.onInputLockUpdated();
     }
 
@@ -181,10 +225,11 @@ export class MainScene extends Phaser.Scene implements GM {
 
         this.slotButtons = new Array(4).fill(1).map((_, i) => {
             return (new CardButton(
-                this,
+                this, i,
                 0 + padding + w / 2 + (w + padding) * i, - padding + h / 2,
                 w, h,
-                () => this.onSlotButtonPressed(i)
+                () => this.onSlotButtonPressed(i),
+                (droppedZoneID: number) => this.onItemDragDropped(i, droppedZoneID)
             ));
         });
         this.buttonContainer.add(this.slotButtons);
@@ -204,18 +249,38 @@ export class MainScene extends Phaser.Scene implements GM {
 
     triggerSlot(slotID: integer) {
         const targetSlot = this.player.slots[slotID];
-        if (targetSlot.itemDef.types.includes('block')) {
-            const blockID = (<IBlockItemDef>this.player.slots[slotID].itemDef).block.builds;
-            const cell = this.cellWorld.getCell(this.player.cellX, this.player.cellY);
-            const success = this.tryAddBlock(cell, blockID);
-            if (success) {
-                this.player.consumeItem(slotID);
-                this.updateCells();
-            }
-        } else {
-            this.player.toggleActiveSlot(slotID);
-        }
+        this.player.toggleActiveSlot(slotID);
     }
+
+    onItemDragDropped(from: integer, to: integer) {
+        console.log('onItemDragDropped', from, to);
+        if (from === -1) {
+            const toSlot = this.player.slots[to];
+
+        }
+        const fromSlot: ItemSlot = (from === -1 ? this.player.tempDrop.slot : this.player.slots[from]);
+        const toSlot: ItemSlot = (to === -1 ? this.player.tempDrop.slot : this.player.slots[to]);
+        if (fromSlot === toSlot) {
+            return;
+        }
+
+        if (from === -1 && to !== -1) { // pick up item
+            const fromEntity = this.player.tempDrop;
+            const toSlot = this.player.slots[to];
+            this.player.addItemToSlotOrSwap(fromEntity, to);
+        }
+
+        if (from !== -1 && to === -1) { // pick up item
+            const fromSlot = this.player.slots[to];
+            const toEntity = this.player.tempDrop;
+            this.player.dropItemOrSwap(from, toEntity);
+        }
+
+        this.viewIsDirty.push('onItemDragDropped');
+        // const _slot = fromSlot.clone();
+        // fromSlot.
+    }
+
 
     createJoystick() {
         const w = this.sys.canvas.width;
@@ -294,12 +359,52 @@ export class MainScene extends Phaser.Scene implements GM {
 
     }
 
+    createPlaceBlockUI() {
+        this.placeBlockUI = new PlaceBlockUI(this, this.cellWorld);
+        this.placeBlockUI.on(PlaceBlockUI.onDirectionChosen, (direction: Point) => {
+
+            const { x: dx, y: dy } = direction;
+            const targetSlot = this.player.getActiveSlot();
+            if (targetSlot.itemDef.types.includes('block')) {
+                const blockID = (<IBlockItemDef>targetSlot.itemDef).block.builds;
+                const cell = this.cellWorld.getCell(this.player.cellX + dx, this.player.cellY + dy);
+                const success = this.tryAddBlock(cell, blockID);
+                if (success) {
+                    this.player.consumeItem(this.player.activeSlotID);
+                    this.viewIsDirty.push('PlaceBlockUI.onDirectionChosen');
+                }
+            } else {
+            }
+        })
+        this.add.existing(this.placeBlockUI);
+    }
+
+    createDropItemUI(player: Player) {
+        this.dropItemUI = new DropItemUI(this);
+
+        player.on(Player.onTempSlotUpdated, () => {
+            if (player.tempDrop) {
+                this.dropItemUI.enable(player.tempDrop);
+                this.dropItemUI.button.toggleDrag(true);
+                this.slotButtons.forEach((button) => button.toggleDrag(true));
+            } else {
+                this.dropItemUI.disable();
+                this.dropItemUI.button.toggleDrag(false);
+                this.slotButtons.forEach((button) => button.toggleDrag(false));
+            }
+        });
+        this.add.existing(this.dropItemUI);
+        this.dropItemUI.disable();
+    }
+
     queueMovePlayer(dx: integer, dy: integer) {
         this.inputQueue.direction.x = dx;
         this.inputQueue.direction.y = dy;
     }
 
     movePlayer(dx: integer, dy: integer) {
+        // console.log(`movePlayer(${dx}, ${dy})`, new Error());
+
         let newCellX = Phaser.Math.Clamp(this.player.cellX + dx, 0, this.cellWorld.width - 1);
         let newCellY = Phaser.Math.Clamp(this.player.cellY + dy, 0, this.cellWorld.height - 1);
 
@@ -308,7 +413,7 @@ export class MainScene extends Phaser.Scene implements GM {
             // do something if touch world boundary or decided to not move
         } else if (destCell) {
             // interact with cell
-            const activeItem = this.player.getActiveSlotItem();
+            const activeItem = this.player.getActiveSlot();
             let worldChanged = false;
             let canMove = true;
 
@@ -335,27 +440,32 @@ export class MainScene extends Phaser.Scene implements GM {
             if (!canMove) {
                 newCellX = this.player.cellX;
                 newCellY = this.player.cellY;
+            } else {
+                this.checkTempSlotAndDrop();
             }
         }
 
         this.player.cellX = newCellX;
         this.player.cellY = newCellY;
 
-        this.updateCells();
-        this.animatePlayer();
+        if (!(this.player.oldCellX === this.player.cellX && this.player.oldCellY === this.player.cellY)) {
+            this.viewIsDirty.push('movePlayer');
+            this.animatePlayer();
+        }
     }
 
     checkEntityAndInteract() {
         const playerCell = this.cellWorld.getCell(this.player.cellX, this.player.cellY);
-        if (playerCell.physicsType === 'entity') {
+        if (playerCell.entityStack.length > 0) {
             playerCell.entityStack.forEach((entityID, i) => {
                 const entity = Entity.getEntityByID(entityID);
                 if (entity.type === 'drop') {
                     const dropEntity = entity as DropEntity;
-                    const drop = dropEntity.entityDef.drop;
-                    this.player.addItem(drop.item, drop.level, drop.count);
+                    // this.player.addItem(drop.item, drop.level, drop.itemCount);
                     playerCell.removeEntity(entity);
-                    Entity.destroyEntity(entity);
+                    entity.setVisible(false);
+                    this.player.setTempSlot(dropEntity);
+                    // Entity.destroyEntity(entity);
                 }
             });
         }
@@ -368,7 +478,16 @@ export class MainScene extends Phaser.Scene implements GM {
         }
     }
 
-    tryDigCell(cell: Cell, player: Player, activeItem: Slot): boolean {
+    checkTempSlotAndDrop() {
+        const playerCell = this.cellWorld.getCell(this.player.cellX, this.player.cellY);
+        if (this.player.tempDrop !== null) {
+            playerCell.addEntity(this.player.tempDrop);
+            this.player.tempDrop.setVisible(true);
+            this.player.setTempSlot(null);
+        }
+    }
+
+    tryDigCell(cell: Cell, player: Player, activeItem: ItemSlot): boolean {
 
         let worldChanged = false;
         const blockType = cell.getTopBlock();
@@ -390,7 +509,7 @@ export class MainScene extends Phaser.Scene implements GM {
         }
 
         if (worldChanged) {
-            this.updateCells();
+            this.viewIsDirty.push('tryDigCell');
         }
         return worldChanged;
     }
@@ -424,10 +543,15 @@ export class MainScene extends Phaser.Scene implements GM {
                 y: config.spriteHeight * (this.player.cellY - this.viewportY),
                 duration: config.movementTweenSpeed,
                 ease: 'Linear',
-                onStart: () => this.playerSprite.play('player_walk'),
-                // onComplete: () => {
-                // },
+                onStart: () => {
+                    this.playerSprite.play('player_walk');
+                },
+                onComplete: () => {
+                    this.removeInputLock('animatePlayer');
+                },
             });
+            this.addInputLock('animatePlayer');
+
         }
     }
 
@@ -437,7 +561,6 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     async updateCells() {
-
         const viewportX = Phaser.Math.Clamp(this.player.cellX - 2, 0, this.cellWorld.width - config.viewWidth);
         const viewportY = Phaser.Math.Clamp(this.player.cellY - 3, 0, this.cellWorld.height - config.viewHeight);
 
@@ -448,6 +571,11 @@ export class MainScene extends Phaser.Scene implements GM {
 
         this.viewportX = viewportX;
         this.viewportY = viewportY;
+
+        const activeSlot = this.player.getActiveSlot();;
+        if (this.placeBlockUI && activeSlot && activeSlot.itemDef.types.includes('block')) {
+            this.placeBlockUI.updateButtons(this.player, this.viewportX, this.viewportY, this.player.getActiveSlot());
+        }
 
 
         const playerNeedMove = (

@@ -7,24 +7,32 @@ type Container = Phaser.GameObjects.Container;
 type Text = Phaser.GameObjects.Text;
 type Scene = Phaser.Scene;
 
-export class Slot {
+export class ItemSlot {
     itemID: integer;
-    count: integer;
+    itemCount: integer;
     level: integer;
     isActive: boolean;
+    static INFINITE_ITEM_COUNT = -1;
 
     get itemDef() {
         return config.items[this.itemID];
     }
 
-    constructor(itemID: integer, level: integer) {
+    constructor(itemID: integer, level: integer, itemCount: integer = 0) {
         this.itemID = itemID;
         this.level = level;
-        this.count = 0;
+        this.itemCount = itemCount;
     }
 
-    setCount(count: integer) {
-        this.count = count;
+    clone() {
+        const slot = new ItemSlot(this.itemID, this.level);
+        slot.itemCount = this.itemCount;
+        slot.isActive = this.isActive;
+        return slot;
+    }
+
+    setCount(itemCount: integer) {
+        this.itemCount = itemCount;
     }
 
     updateButton(button: CardButton) {
@@ -44,9 +52,9 @@ export class Slot {
                 iconContainer.add(icon);
                 const levelString = this.level === 0 ? '' : `+${this.level}`
                 title.setText(`${capitalizeFirstLetter(itemDef.name)}${levelString}`);
-                const count = this.count == null ? '' : (this.count === -1 ? '∞' : `x${this.count}`) as string;
-                countLabel.setText(count);
-                if (this.count === -1) {
+                const itemCount = this.itemCount == null ? '' : (this.itemCount === -1 ? '∞' : `x${this.itemCount}`) as string;
+                countLabel.setText(itemCount);
+                if (this.itemCount === -1) {
                     countLabel.setStyle({ fontSize: 60 });
                 } else {
                     countLabel.setStyle({ fontSize: 30 });

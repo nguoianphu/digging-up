@@ -1,5 +1,6 @@
-import { Slot } from "./Item";
+import { ItemSlot } from "./Item";
 import { ItemTypes } from "../config";
+import { DropEntity } from "./Entity";
 
 
 export class Player extends Phaser.Events.EventEmitter {
@@ -7,18 +8,20 @@ export class Player extends Phaser.Events.EventEmitter {
     public cellY: number = 0;
     public oldCellX: number = 0;
     public oldCellY: number = 0;
-    public slots: Slot[] = [];
+    public slots: ItemSlot[] = [];
     public activeSlotID: integer = 0;
+    public tempDrop: DropEntity = null;
     public itemLimit: integer = 4;
     public static onItemUpdated: string = 'onItemUpdated';
     public static onActiveUpdated: string = 'onActiveUpdated';
+    public static onTempSlotUpdated: string = 'onTempSlotUpdated';
 
     constructor() {
         super();
-        this.slots = new Array(this.itemLimit).fill(1).map(_ => new Slot(ItemTypes.EMPTY, 0));
+        this.slots = new Array(this.itemLimit).fill(1).map(_ => new ItemSlot(ItemTypes.EMPTY, 0));
     }
 
-    getActiveSlotItem() {
+    getActiveSlot() {
         if (this.activeSlotID === -1) return null;
         return this.slots[this.activeSlotID];
     }
@@ -35,7 +38,7 @@ export class Player extends Phaser.Events.EventEmitter {
         }
         this.emit(Player.onActiveUpdated, this.activeSlotID);
     }
-    
+
     changeActiveSlot(slotID: integer) {
         this.slots[this.activeSlotID].isActive = false;
         this.activeSlotID = slotID;
@@ -43,7 +46,7 @@ export class Player extends Phaser.Events.EventEmitter {
         this.emit(Player.onActiveUpdated, this.activeSlotID);
     }
 
-    addItem(itemID: ItemTypes, level: integer, count?: integer): integer {
+    addItem(itemID: ItemTypes, level: integer, itemCount?: integer): integer {
         const slotID = this.slots.findIndex((slot) => {
             return (
                 slot.itemID === ItemTypes.EMPTY ||
@@ -54,33 +57,123 @@ export class Player extends Phaser.Events.EventEmitter {
         let slot = this.slots[slotID];
 
         if (slot.itemID === ItemTypes.EMPTY) {
-            this.slots[slotID] = new Slot(itemID, level);
-            if (count != null) this.slots[slotID].setCount(count);
+            this.slots[slotID] = new ItemSlot(itemID, level);
+            if (itemCount != null) this.slots[slotID].setCount(itemCount);
         } else {
             // found same item in slot
             slot.level = Math.max(slot.level, level);
             const stackLevel = Math.min(slot.itemDef.maxStack.length - 1, slot.level);
-            if (slot.itemDef.maxStack[stackLevel] !== -1 && count != null) slot.count += count;
+            if (slot.itemDef.maxStack[stackLevel] !== -1 && itemCount != null) slot.itemCount += itemCount;
         }
         slot = this.slots[slotID];
         const stackLevel = Math.min(slot.itemDef.maxStack.length - 1, slot.level);
-        slot.count = Math.min(slot.count, slot.itemDef.maxStack[stackLevel]);
+        slot.itemCount = Math.min(slot.itemCount, slot.itemDef.maxStack[stackLevel]);
         this.emit(Player.onItemUpdated, slotID);
         return slotID;
     }
 
+
+    addItemToSlotOrSwap(fromEntity: DropEntity, toSlotID: integer): integer {
+        let slot = this.slots[toSlotID];
+
+        const dropSlot = fromEntity.slot;
+        const { itemID, level, itemCount } = dropSlot;
+
+        if (slot.itemID !== itemID || slot.level !== level) {
+            // different item
+
+            const leavingSlot = this.slots[toSlotID].clone();
+            this.slots[toSlotID] = dropSlot;
+
+            fromEntity.setSlotAndUpdateGraphics(leavingSlot);
+            if (leavingSlot.itemID === ItemTypes.EMPTY) {
+                this.tempDrop = null; // remove picked up entity
+                fromEntity.destroyEntity();
+            }
+        } else {
+            // found same item in slot
+
+            // slot.level = Math.max(slot.level, level); // no need to upgrade now
+            const stackLevel = Math.min(slot.itemDef.maxStack.length - 1, slot.level);
+            const maxStack = slot.itemDef.maxStack[stackLevel];
+            if (maxStack !== ItemSlot.INFINITE_ITEM_COUNT && itemCount != null) {
+                slot.itemCount += itemCount;
+            }
+            this.tempDrop = null; // remove picked up entity
+            fromEntity.destroyEntity();
+        }
+
+        slot = this.slots[toSlotID];
+
+        // limit item count to maxStack
+        const stackLevel = Math.min(slot.itemDef.maxStack.length - 1, slot.level);
+        const maxStack = slot.itemDef.maxStack[stackLevel];
+        slot.itemCount = Math.min(slot.itemCount, maxStack);
+
+        this.emit(Player.onItemUpdated, toSlotID);
+        this.emit(Player.onTempSlotUpdated);
+        return toSlotID;
+    }
+
+    dropItemOrSwap(fromSlotID: integer, toEntity: DropEntity) {
+        let slot = this.slots[toSlotID];
+
+        const dropSlot = fromEntity.slot;
+        const { itemID, level, itemCount } = dropSlot;
+
+        if (slot.itemID !== itemID || slot.level !== level) {
+            // different item
+
+            const leavingSlot = this.slots[toSlotID].clone();
+            this.slots[toSlotID] = dropSlot;
+
+            fromEntity.setSlotAndUpdateGraphics(leavingSlot);
+            if (leavingSlot.itemID === ItemTypes.EMPTY) {
+                this.tempDrop = null; // remove picked up entity
+                fromEntity.destroyEntity();
+            }
+        } else {
+            // found same item in slot
+
+            // slot.level = Math.max(slot.level, level); // no need to upgrade now
+            const stackLevel = Math.min(slot.itemDef.maxStack.length - 1, slot.level);
+            const maxStack = slot.itemDef.maxStack[stackLevel];
+            if (maxStack !== ItemSlot.INFINITE_ITEM_COUNT && itemCount != null) {
+                slot.itemCount += itemCount;
+            }
+            this.tempDrop = null; // remove picked up entity
+            fromEntity.destroyEntity();
+        }
+
+        slot = this.slots[toSlotID];
+
+        // limit item count to maxStack
+        const stackLevel = Math.min(slot.itemDef.maxStack.length - 1, slot.level);
+        const maxStack = slot.itemDef.maxStack[stackLevel];
+        slot.itemCount = Math.min(slot.itemCount, maxStack);
+
+        this.emit(Player.onItemUpdated, toSlotID);
+        this.emit(Player.onTempSlotUpdated);
+        return toSlotID;
+    }
+
     consumeItem(slotID: integer) {
         const slot = this.slots[slotID];
-        if (slot.count !== -1) slot.count = Math.max(0, slot.count - 1);
+        if (slot.itemCount !== -1) slot.itemCount = Math.max(0, slot.itemCount - 1);
         const stackLevel = Math.min(slot.itemDef.maxStack.length - 1, slot.level);
-        if (slot.count == 0 && slot.itemDef.maxStack[stackLevel] !== -1) {
+        if (slot.itemCount == 0 && slot.itemDef.maxStack[stackLevel] !== -1) {
             this.removeItem(slotID, true);
         }
         this.emit(Player.onItemUpdated, slotID);
     }
 
     removeItem(slotID: integer, isSilent: boolean = false) {
-        this.slots[slotID] = new Slot(ItemTypes.EMPTY, 0);
+        this.slots[slotID] = new ItemSlot(ItemTypes.EMPTY, 0);
         if (!isSilent) this.emit(Player.onItemUpdated, slotID);
+    }
+
+    setTempSlot(dropEntity: DropEntity) {
+        this.tempDrop = dropEntity;
+        this.emit(Player.onTempSlotUpdated);
     }
 }

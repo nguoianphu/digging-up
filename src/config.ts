@@ -9,10 +9,12 @@ export type IConfig = {
     viewHeight: number,
     movementTweenSpeed: number,
     controls: IUIControls;
+    useSheetMap: boolean;
     blockMap: (number | string)[][],
     blocks: { [x: number]: IBlockDef }
     items: { [x: number]: IItemDef }
     entities: { [x: number]: IEntityDef }
+    credits: ICreditEntry[];
 }
 
 export interface ISpriteDef {
@@ -82,14 +84,28 @@ export interface IDropEntityDef extends IEntityDef {
     drop: {
         item: integer;
         level: integer;
-        count?: integer;
+        itemCount?: integer;
     }
 }
+
+export interface IChestEntityDef extends IEntityDef {
+    chest: IChestEntityDetailDef;
+}
+interface IChestEntityDetailDef extends ISpriteDef {
+    item: integer;
+    level: integer;
+    itemCount?: integer;
+};
 
 export interface IUIControls {
     swipeThumbSize: number,
     minSwipeDist: number,
     directionSnaps: integer,
+}
+
+export interface ICreditEntry {
+    title: string;
+    names: string[]
 }
 
 const c = require('json-loader!yaml-loader!./config.yml');

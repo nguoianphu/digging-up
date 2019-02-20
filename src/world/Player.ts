@@ -116,21 +116,21 @@ export class Player extends Phaser.Events.EventEmitter {
     }
 
     dropItemOrSwap(fromSlotID: integer, toEntity: DropEntity) {
-        let slot = this.slots[toSlotID];
+        let slot = this.slots[fromSlotID];
 
-        const dropSlot = fromEntity.slot;
+        const dropSlot = toEntity.slot;
         const { itemID, level, itemCount } = dropSlot;
 
         if (slot.itemID !== itemID || slot.level !== level) {
             // different item
 
-            const leavingSlot = this.slots[toSlotID].clone();
-            this.slots[toSlotID] = dropSlot;
+            const leavingSlot = this.slots[fromSlotID].clone();
+            this.slots[fromSlotID] = dropSlot;
 
-            fromEntity.setSlotAndUpdateGraphics(leavingSlot);
+            toEntity.setSlotAndUpdateGraphics(leavingSlot);
             if (leavingSlot.itemID === ItemTypes.EMPTY) {
                 this.tempDrop = null; // remove picked up entity
-                fromEntity.destroyEntity();
+                toEntity.destroyEntity();
             }
         } else {
             // found same item in slot
@@ -139,22 +139,23 @@ export class Player extends Phaser.Events.EventEmitter {
             const stackLevel = Math.min(slot.itemDef.maxStack.length - 1, slot.level);
             const maxStack = slot.itemDef.maxStack[stackLevel];
             if (maxStack !== ItemSlot.INFINITE_ITEM_COUNT && itemCount != null) {
-                slot.itemCount += itemCount;
+                toEntity.slot.itemCount += itemCount;
             }
-            this.tempDrop = null; // remove picked up entity
-            fromEntity.destroyEntity();
+            // this.tempDrop = null; // remove picked up entity
+            // toEntity.destroyEntity();
+            this.removeItem(fromSlotID, true);
         }
 
-        slot = this.slots[toSlotID];
+        slot = this.slots[fromSlotID];
 
         // limit item count to maxStack
         const stackLevel = Math.min(slot.itemDef.maxStack.length - 1, slot.level);
         const maxStack = slot.itemDef.maxStack[stackLevel];
         slot.itemCount = Math.min(slot.itemCount, maxStack);
 
-        this.emit(Player.onItemUpdated, toSlotID);
+        this.emit(Player.onItemUpdated, fromSlotID);
         this.emit(Player.onTempSlotUpdated);
-        return toSlotID;
+        return fromSlotID;
     }
 
     consumeItem(slotID: integer) {

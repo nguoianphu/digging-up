@@ -37,14 +37,14 @@
       </div>
     </div>
   </div>
-  <script src="build/bundle.js?v=10"></script>
+  <script src="build/bundle.js?v=11"></script>
   <script>
     document.querySelector('.fullscreenButton').addEventListener('click', () => {
         const fullscreenName = scene.sys.game.device.fullscreen.request;
         if (fullscreenName) {
             return document.querySelector('.container')[fullscreenName]();
         }
-    })
+    });
   </script>
 </body>
 

@@ -1,15 +1,14 @@
-import { bindAll } from 'lodash';
 
 import { preload as _preload, setUpAnimations as _setUpAnimations } from '../preload';
-import { EventContext, defaultFont } from '../Utils';
+import { EventContext } from '../Utils';
 import { CardButton } from '../UI/CardButton';
 import { ItemSlot } from '../world/Item';
 
-import { config, ItemTypes, BlockTypes, ISolidBlockDef, IMiningItemDef, IBlockDef, IBlockItemDef } from '../config';
+import { config, ISolidBlockDef, IMiningItemDef, IBlockItemDef, IItemSlot, ITrapEnemyDef } from '../config';
 import { GM } from '../GM';
 import { Player } from '../world/Player';
 import { CellWorld, Cell } from '../world/CellWorld';
-import { Entity, DropEntity } from '../world/Entity';
+import { Entity, DropEntity, EnemyEntity } from '../world/Entity';
 import { PlaceBlockUI } from '../UI/PlaceBlockUI';
 import { DropItemUI } from '../UI/DropItemUI';
 
@@ -125,10 +124,10 @@ export class MainScene extends Phaser.Scene implements GM {
         ]);
 
 
-        let blockMap = config.blockMap;
+        let blockMap = config.map.blockMap;
         let sheetMap: { values: string[][] } = null;
-        if (config.useSheetMap && (sheetMap = this.sys.cache.json.get('sheetMap'))) {
-            blockMap = sheetMap.values.map((rows) => rows.map(val => val.startsWith('$') ? val : Number(val)));
+        if (config.map.useSheetMap && (sheetMap = this.sys.cache.json.get('sheetMap'))) {
+            blockMap = sheetMap.values.map((rows) => rows.map(val => (val.startsWith('$') || val.startsWith('!')) ? val : Number(val)));
         }
         this.cellWorld.loadWorld(blockMap);
         this.initPlayer(this.cellWorld.midWidth, 0);
@@ -144,10 +143,13 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     startGame() {
-        const pickSlotID = this.player.addItem(ItemTypes.PICK, 0, ItemSlot.INFINITE_ITEM_COUNT);
-        this.player.addItem(ItemTypes.PLATFORM, 0, 8);
-        this.slotButtons.forEach((_, i) => this.updateSlotButton(i));
-        this.player.changeActiveSlot(pickSlotID);
+        config.player.inventory.slots.forEach((a: IItemSlot, i) => {
+            const { item, level, itemCount } = a;
+            this.player.addItem(item, level, itemCount);
+            this.updateSlotButton(i);
+        })
+        this.player.changeActiveSlot(config.player.inventory.activeSlot);
+        this.player.initHP(config.player.hp);
     }
 
     update(time: number, delta: number): void {
@@ -248,7 +250,6 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     triggerSlot(slotID: integer) {
-        const targetSlot = this.player.slots[slotID];
         this.player.toggleActiveSlot(slotID);
     }
 
@@ -457,7 +458,7 @@ export class MainScene extends Phaser.Scene implements GM {
     checkEntityAndInteract() {
         const playerCell = this.cellWorld.getCell(this.player.cellX, this.player.cellY);
         if (playerCell.entityStack.length > 0) {
-            playerCell.entityStack.forEach((entityID, i) => {
+            playerCell.entityStack.forEach((entityID) => {
                 const entity = Entity.getEntityByID(entityID);
                 if (entity.type === 'drop') {
                     const dropEntity = entity as DropEntity;
@@ -466,6 +467,18 @@ export class MainScene extends Phaser.Scene implements GM {
                     entity.setVisible(false);
                     this.player.setTempSlot(dropEntity);
                     // Entity.destroyEntity(entity);
+                } else if (entity.type === 'enemy') {
+                    const enemyEntity = entity as EnemyEntity;
+                    switch (enemyEntity.enemyType) {
+                        case 'trap': {
+                            const trap = (enemyEntity.enemyDef as ITrapEnemyDef).trap;
+                            const { damage } = trap;
+
+                            this.player.takeDamage(damage);
+                            playerCell.removeEntity(entity);
+                            Entity.destroyEntity(enemyEntity);
+                        } break;
+                    }
                 }
             });
         }
@@ -524,8 +537,8 @@ export class MainScene extends Phaser.Scene implements GM {
         this.player.oldCellX = this.player.cellX = cellX;
         this.player.oldCellY = this.player.cellY = cellY;
 
-        this.viewportX = Phaser.Math.Clamp(this.player.cellX - 2, 0, this.cellWorld.width - config.viewWidth);
-        this.viewportY = Phaser.Math.Clamp(this.player.cellY - 3, 0, this.cellWorld.height - config.viewHeight);
+        this.viewportX = Phaser.Math.Clamp(this.player.cellX - Math.floor(config.viewWidth / 2), 0, this.cellWorld.width - config.viewWidth);
+        this.viewportY = Phaser.Math.Clamp(this.player.cellY - Math.floor(config.viewHeight / 2), 0, this.cellWorld.height - config.viewHeight);
 
         this.playerContainer.x = config.spriteWidth * (this.player.cellX - this.viewportX);
         this.playerContainer.y = config.spriteHeight * (this.player.cellY - this.viewportY);
@@ -561,8 +574,8 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     async updateCells() {
-        const viewportX = Phaser.Math.Clamp(this.player.cellX - 2, 0, this.cellWorld.width - config.viewWidth);
-        const viewportY = Phaser.Math.Clamp(this.player.cellY - 3, 0, this.cellWorld.height - config.viewHeight);
+        const viewportX = Phaser.Math.Clamp(this.player.cellX - Math.floor(config.viewWidth / 2), 0, this.cellWorld.width - config.viewWidth);
+        const viewportY = Phaser.Math.Clamp(this.player.cellY - Math.floor(config.viewHeight / 2), 0, this.cellWorld.height - config.viewHeight);
 
         const viewCells = this.cellWorld.getCells(viewportX, viewportY, config.viewWidth, config.viewHeight);
         viewCells.forEach((col, xx) => {
@@ -607,7 +620,7 @@ export class MainScene extends Phaser.Scene implements GM {
                 config.spriteWidth * xx,
                 config.spriteHeight * yy,
                 stack.map((blockID) => {
-                    const { name, key, frame } = config.blocks[blockID];
+                    const { key, frame } = config.blocks[blockID];
                     if (key === '') return null;
                     return (this.add.image(0, 0, key, frame)
                         .setOrigin(0)
@@ -641,50 +654,50 @@ export class MainScene extends Phaser.Scene implements GM {
     onInputMove(dist: number, angle: number, dir: 0 | 1 | 2 | 3) {
     }
 
-    private registerKeyboard(): void {
-        // Creates object for input with WASD keys
-        this.moveKeys = this.input.keyboard.addKeys({
-            'up': Phaser.Input.Keyboard.KeyCodes.W,
-            'down': Phaser.Input.Keyboard.KeyCodes.S,
-            'left': Phaser.Input.Keyboard.KeyCodes.A,
-            'right': Phaser.Input.Keyboard.KeyCodes.D
-        }) as IMoveKeys;
+    // private registerKeyboard(): void {
+    //     // Creates object for input with WASD keys
+    //     this.moveKeys = this.input.keyboard.addKeys({
+    //         'up': Phaser.Input.Keyboard.KeyCodes.W,
+    //         'down': Phaser.Input.Keyboard.KeyCodes.S,
+    //         'left': Phaser.Input.Keyboard.KeyCodes.A,
+    //         'right': Phaser.Input.Keyboard.KeyCodes.D
+    //     }) as IMoveKeys;
 
 
-        // Stops player acceleration on up press of WASD keys
-        this.input.keyboard.on('keyup_W', (event: any) => {
-            if (this.moveKeys.down.isUp) {
-                // this.plane.setAccelerationY(0);
-            }
-        });
-        this.input.keyboard.on('keyup_S', (event: any) => {
-            if (this.moveKeys.up.isUp) {
-                // this.plane.setAccelerationY(0);
-            }
-        });
-        this.input.keyboard.on('keyup_A', (event: any) => {
-            if (this.moveKeys.right.isUp) {
-                // this.plane.setAccelerationX(0);
-            }
-        });
-        this.input.keyboard.on('keyup_D', (event: any) => {
-            if (this.moveKeys.left.isUp) {
-                // this.plane.setAccelerationX(0);
-            }
-        });
-    }
+    //     // Stops player acceleration on up press of WASD keys
+    //     this.input.keyboard.on('keyup_W', (event: any) => {
+    //         if (this.moveKeys.down.isUp) {
+    //             // this.plane.setAccelerationY(0);
+    //         }
+    //     });
+    //     this.input.keyboard.on('keyup_S', (event: any) => {
+    //         if (this.moveKeys.up.isUp) {
+    //             // this.plane.setAccelerationY(0);
+    //         }
+    //     });
+    //     this.input.keyboard.on('keyup_A', (event: any) => {
+    //         if (this.moveKeys.right.isUp) {
+    //             // this.plane.setAccelerationX(0);
+    //         }
+    //     });
+    //     this.input.keyboard.on('keyup_D', (event: any) => {
+    //         if (this.moveKeys.left.isUp) {
+    //             // this.plane.setAccelerationX(0);
+    //         }
+    //     });
+    // }
 
-    private registerMouse(): void {
-        this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-        });
-        this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
-        });
-    }
+    // private registerMouse(): void {
+    //     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+    //     });
+    //     this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+    //     });
+    // }
 
-    private requestFullscreen() {
-        const fullscreenName = this.sys.game.device.fullscreen.request;
-        if (fullscreenName) {
-            return (<any>this.sys.canvas)[fullscreenName]();
-        }
-    }
+    // private requestFullscreen() {
+    //     const fullscreenName = this.sys.game.device.fullscreen.request;
+    //     if (fullscreenName) {
+    //         return (<any>this.sys.canvas)[fullscreenName]();
+    //     }
+    // }
 }

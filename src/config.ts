@@ -1,3 +1,6 @@
+import { BlockTypes, BlockBehaviorTypes } from "./_BlockTypes";
+import { ItemTypes } from "./_ItemTypes";
+import { EnemyType } from "./_EnemyType";
 
 
 export type IConfig = {
@@ -9,12 +12,25 @@ export type IConfig = {
     viewHeight: number,
     movementTweenSpeed: number,
     controls: IUIControls;
-    useSheetMap: boolean;
-    blockMap: (number | string)[][],
+    player: IPlayerDef;
+    map: {
+        useSheetMap: boolean;
+        blockMap: (number | string)[][],
+    }
     blocks: { [x: number]: IBlockDef }
     items: { [x: number]: IItemDef }
     entities: { [x: number]: IEntityDef }
+    enemies: { [x: number]: IEnemyDef }
     credits: ICreditEntry[];
+}
+
+export interface IPlayerDef {
+    hp: integer;
+
+    inventory: {
+        activeSlot: integer;
+        slots: IItemSlot[];
+    }
 }
 
 export interface ISpriteDef {
@@ -25,15 +41,7 @@ export interface ISpriteDef {
 
 export interface IBlockDef extends ISpriteDef {
     name: string;
-    type: 'air' | 'solid' | 'platform';
-}
-
-export enum BlockTypes {
-    AIR = 0,
-    DIRT = 1,
-    STONE = 2,
-    ROCK = 3,
-    OBSIDIAN = 4,
+    type: BlockBehaviorTypes;
 }
 
 export interface ISolidBlockDef extends IBlockDef {
@@ -47,14 +55,6 @@ export interface IItemDef {
     types: string[];
     sprites: ISpriteDef[];
     maxStack: number[];
-}
-
-export enum ItemTypes {
-    EMPTY = 0,
-    PICK = 1,
-    SWORD = 2,
-    WARHAMMER = 3,
-    PLATFORM = 4,
 }
 
 export interface IMiningItemDef extends IItemDef {
@@ -74,6 +74,20 @@ export interface IBlockItemDef extends IItemDef {
         builds: BlockTypes; // block id
     }
 }
+export interface IEnemyDef extends ISpriteDef {
+    enemyName: string;
+    enemyType: string;
+}
+export interface ITrapEnemyDef extends IEnemyDef {
+    trap: {
+        damage: IDamage;
+    }
+}
+
+export interface IDamage {
+    physical: number;
+}
+
 
 export interface IEntityDef {
     name: string;
@@ -81,21 +95,26 @@ export interface IEntityDef {
 }
 
 export interface IDropEntityDef extends IEntityDef {
-    drop: {
-        item: integer;
-        level: integer;
-        itemCount?: integer;
-    }
+    drop: IItemSlot;
+}
+
+export interface IItemSlot {
+    item: ItemTypes;
+    level: integer;
+    itemCount?: integer;
 }
 
 export interface IChestEntityDef extends IEntityDef {
     chest: IChestEntityDetailDef;
 }
-interface IChestEntityDetailDef extends ISpriteDef {
-    item: integer;
-    level: integer;
-    itemCount?: integer;
+interface IChestEntityDetailDef extends ISpriteDef, IItemSlot {
 };
+
+export interface IEnemyEntityDef extends IEntityDef {
+    enemy: {
+        enemyID: integer;
+    };
+}
 
 export interface IUIControls {
     swipeThumbSize: number,

@@ -1,4 +1,4 @@
-import { config, IDropEntityDef, IEntityDef, IChestEntityDef } from "../config";
+import { config, IDropEntityDef, IEntityDef, IChestEntityDef, IEnemyEntityDef, IEnemyDef } from "../config";
 import { Scene } from "phaser";
 import { ItemSlot } from "./Item";
 import { CellWorld } from "./CellWorld";
@@ -106,3 +106,29 @@ export class ChestEntity extends Entity {
 
 }
 
+export class EnemyEntity extends Entity {
+
+    public enemyName: string;
+    public enemyType: string;
+    public enemyDef: IEnemyDef;
+
+    public entityDef: IDropEntityDef;
+    constructor(scene: Scene, cellWorld: CellWorld, entityDef: IEnemyEntityDef, cellX: number, cellY: number) {
+        super(scene, cellWorld, entityDef, cellX, cellY);
+
+        const { enemyID } = entityDef.enemy;
+        this.enemyDef = config.enemies[enemyID];
+        const { enemyName, enemyType, key, frame } = this.enemyDef;
+
+        this.enemyName = enemyName;
+        this.enemyType = enemyType;
+        const sprite = scene.make.image({
+            x: config.spriteWidth / 2,
+            y: config.spriteHeight / 2,
+            key,
+            frame,
+        });
+        this.add(sprite);
+    }
+
+}

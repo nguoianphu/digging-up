@@ -1,6 +1,7 @@
 import { ItemSlot } from "./Item";
-import { ItemTypes } from "../config";
 import { DropEntity } from "./Entity";
+import { ItemTypes } from "../_ItemTypes";
+import { IDamage } from "../config";
 
 
 export class Player extends Phaser.Events.EventEmitter {
@@ -12,6 +13,10 @@ export class Player extends Phaser.Events.EventEmitter {
     public activeSlotID: integer = 0;
     public tempDrop: DropEntity = null;
     public itemLimit: integer = 4;
+
+    public hp: integer;
+    public hpMax: integer;
+
     public static onItemUpdated: string = 'onItemUpdated';
     public static onActiveUpdated: string = 'onActiveUpdated';
     public static onTempSlotUpdated: string = 'onTempSlotUpdated';
@@ -176,5 +181,14 @@ export class Player extends Phaser.Events.EventEmitter {
     setTempSlot(dropEntity: DropEntity) {
         this.tempDrop = dropEntity;
         this.emit(Player.onTempSlotUpdated);
+    }
+
+    initHP(hpMax: integer) {
+        this.hp = this.hpMax = hpMax;
+    }
+
+    takeDamage(damage: IDamage) {
+        const { physical } = damage;
+        this.hp -= physical;
     }
 }

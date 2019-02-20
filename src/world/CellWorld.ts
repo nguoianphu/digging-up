@@ -1,7 +1,8 @@
-import { config, BlockTypes, IEntityDef, IDropEntityDef, IChestEntityDef } from "../config";
-import { Entity, DropEntity, ChestEntity } from "./Entity";
+import { config, IEntityDef, IDropEntityDef, IChestEntityDef, IEnemyEntityDef } from "../config";
+import { Entity, DropEntity, ChestEntity, EnemyEntity } from "./Entity";
 import { Scene } from "phaser";
 import { MainScene } from "../scenes/mainScene";
+import { BlockTypes } from "../_BlockTypes";
 
 export class Cell {
     public name = 'cell';
@@ -113,14 +114,15 @@ export class CellWorld {
             .forEach((col, i) =>
                 col.forEach((cell, j) => {
                     const blockType = blockMap[i][j];
+                    console.log(`(${i},${j}): ${blockType}`);
 
-                    if (typeof blockType === 'string') {
+                    if (typeof blockType === 'string' && (blockType.startsWith('$') || blockType.startsWith('!'))) {
                         const entityID = parseInt(blockType.slice(1), 10);
                         if (Number.isNaN(entityID)) throw new Error(`entityID isNaN: ${entityID}`);
                         const entity = this.entityFactory(this.scene, config.entities[entityID], j, i);
                         this.scene.view.add(entity);
                         cell.addEntity(entity);
-                    } else {
+                    } else if (typeof blockType === 'number') {
                         cell.addBlock(blockType);
                     }
                     // switch (blockType) {
@@ -168,12 +170,13 @@ export class CellWorld {
     entityFactory(scene: Scene, entityDef: IEntityDef, cellX: number, cellY: number): Entity {
         switch (entityDef.type) {
             case 'drop': {
-                const dropDef = entityDef as IDropEntityDef;
-                return new DropEntity(scene, this, dropDef, cellX, cellY);
+                return new DropEntity(scene, this, entityDef as IDropEntityDef, cellX, cellY);
             } break;
             case 'chest': {
-                const chestDef = entityDef as IChestEntityDef;
-                return new ChestEntity(scene, this, chestDef, cellX, cellY);
+                return new ChestEntity(scene, this, entityDef as IChestEntityDef, cellX, cellY);
+            } break;
+            case 'enemy': {
+                return new EnemyEntity(scene, this, entityDef as IEnemyEntityDef, cellX, cellY);
             } break;
             default:
                 throw new Error(`unknown entityDef.type = ${entityDef.type}`)

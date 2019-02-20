@@ -1,7 +1,8 @@
 
-import { config, ItemTypes } from '../config';
+import { config } from '../config';
 import { CardButton } from '../UI/CardButton';
 import { capitalizeFirstLetter } from '../Utils';
+import { ItemTypes } from '../_ItemTypes';
 
 type Container = Phaser.GameObjects.Container;
 type Text = Phaser.GameObjects.Text;

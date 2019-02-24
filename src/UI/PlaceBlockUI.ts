@@ -2,7 +2,7 @@ import { ItemSlot } from "../world/Item";
 import { MainScene } from "../scenes/mainScene";
 import { CellWorld, Cell } from "../world/CellWorld";
 import { Player } from "../world/Player";
-import { config, IBlockItemDef } from "../config";
+import { config, IBlockItemDef } from "../config/config";
 import { EventContext } from "../Utils";
 
 type Container = Phaser.GameObjects.Container;

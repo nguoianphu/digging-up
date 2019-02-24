@@ -5,7 +5,7 @@
 import "phaser";
 import { MainScene } from "./scenes/mainScene";
 
-import { config } from './config';
+import { config } from './config/config';
 
 // main game configuration
 const phaserConfig: GameConfig = {

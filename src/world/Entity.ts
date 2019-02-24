@@ -1,7 +1,8 @@
-import { config, IDropEntityDef, IEntityDef, IChestEntityDef, IEnemyEntityDef, IEnemyDef } from "../config";
+import { config, IDropEntityDef, IEntityDef, IChestEntityDef, IEnemyEntityDef } from "../config/config";
 import { Scene } from "phaser";
 import { ItemSlot } from "./Item";
 import { CellWorld } from "./CellWorld";
+import { IEnemyDef } from "../config/_EnemyTypes";
 
 
 let _entities: Entity[] = [];

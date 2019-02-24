@@ -4,13 +4,14 @@ import { EventContext } from '../Utils';
 import { CardButton } from '../UI/CardButton';
 import { ItemSlot } from '../world/Item';
 
-import { config, ISolidBlockDef, IMiningItemDef, IBlockItemDef, IItemSlot, ITrapEnemyDef } from '../config';
+import { config, ISolidBlockDef, IMiningItemDef, IBlockItemDef, IItemSlot } from '../config/config';
 import { GM } from '../GM';
 import { Player } from '../world/Player';
 import { CellWorld, Cell } from '../world/CellWorld';
 import { Entity, DropEntity, EnemyEntity } from '../world/Entity';
 import { PlaceBlockUI } from '../UI/PlaceBlockUI';
 import { DropItemUI } from '../UI/DropItemUI';
+import { ITrapEnemyDef } from '../config/_EnemyTypes';
 
 type Pointer = Phaser.Input.Pointer;
 type Container = Phaser.GameObjects.Container;
@@ -209,12 +210,12 @@ export class MainScene extends Phaser.Scene implements GM {
 
     addInputLock(reason: string) {
         this.inputLock.push(reason);
-        console.log(`addInputLock(reason: ${reason}), ${this.inputLock.length}`);
+        // console.log(`addInputLock(reason: ${reason}), ${this.inputLock.length}`);
     }
 
     removeInputLock(reason: string) {
         this.inputLock.splice(this.inputLock.indexOf(reason), 1);
-        console.log(`removeInputLock(reason: ${reason}), ${this.inputLock.length}`);
+        // console.log(`removeInputLock(reason: ${reason}), ${this.inputLock.length}`);
         this.onInputLockUpdated();
     }
 

@@ -1,7 +1,7 @@
 import { ItemSlot } from "./Item";
 import { DropEntity } from "./Entity";
-import { ItemTypes } from "../_ItemTypes";
-import { IDamage } from "../config";
+import { ItemTypes } from "../config/_ItemTypes";
+import { IDamage } from "../config/_BasicTypes";
 
 
 export class Player extends Phaser.Events.EventEmitter {

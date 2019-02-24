@@ -71,6 +71,13 @@ config:
       - [2, 3, 3, 3, 3, $2, 3, 2, 3, 3, 3, 3, 1, 3, 3, 3, 3, 3, 3, 1]
       - [2, 3, 3, 1, 3, 4, 4, 1, 3, 2, 2, 1, 0, 0, 0, 2, 3, 4, 4, 2]
       - [2, 2, 3, 3, 1, 1, 4, 4, 4, 4, 3, 4, 4, 4, 4, 2, 0, 0, 0, 1]
+
+#  ██████  ██       ██████   ██████ ██   ██ ███████ 
+#  ██   ██ ██      ██    ██ ██      ██  ██  ██      
+#  ██████  ██      ██    ██ ██      █████   ███████ 
+#  ██   ██ ██      ██    ██ ██      ██  ██       ██ 
+#  ██████  ███████  ██████   ██████ ██   ██ ███████ 
+#                                                   
   blocks:
     0:
       name: air
@@ -120,16 +127,47 @@ config:
       type: trap
       key: 'spritesheet_complete'
       frame: 'spikes'
+
+#  ███████ ███    ██ ███████ ███    ███ ██ ███████ ███████ 
+#  ██      ████   ██ ██      ████  ████ ██ ██      ██      
+#  █████   ██ ██  ██ █████   ██ ████ ██ ██ █████   ███████ 
+#  ██      ██  ██ ██ ██      ██  ██  ██ ██ ██           ██ 
+#  ███████ ██   ████ ███████ ██      ██ ██ ███████ ███████ 
+#                                                          
   enemies:
     0: 
       enemyName: spike
-      enemyType: trap
+      enemyTypes: [trap]
       key: 'spritesheet_complete'
       frame: 'spikes'
       trap:
         damage:
           physical: 1
+    1: 
+      enemyName: slime
+      enemyTypes: [queue, move, faceLeftRight, passiveAttack]
+      key: 'spritesheet_complete'
+      frame: 'slimeBlue'
+      queue:
+        speed: 1 # 0 = no move; +ve = fast; -ve = stunned
+      move:
+        directions: [0, 4] # 0=right, 4=left
+        speed: 1
+      faceLeftRight:
+        spriteFacingRight: false
+        startFacingRight: true
+      passiveAttack: # does not aggro
+        damage:
+          physical: 1
+          knock: undo
+      
 
+#  ██ ████████ ███████ ███    ███ ███████ 
+#  ██    ██    ██      ████  ████ ██      
+#  ██    ██    █████   ██ ████ ██ ███████ 
+#  ██    ██    ██      ██  ██  ██      ██ 
+#  ██    ██    ███████ ██      ██ ███████ 
+#                                         
   items:
     0:
       name: ' '
@@ -167,7 +205,7 @@ config:
     3:
       name: war_hammer
       types: [mining, fight]
-      sprites: 
+      sprites:
         - key: 'spritesheet_items'
           frame: 'hammer_bronze'
         - key: 'spritesheet_items'
@@ -189,6 +227,13 @@ config:
       maxStack: [20]
       block:
         builds: 5 # platform
+
+#  ███████ ███    ██ ████████ ██ ████████ ██ ███████ ███████ 
+#  ██      ████   ██    ██    ██    ██    ██ ██      ██      
+#  █████   ██ ██  ██    ██    ██    ██    ██ █████   ███████ 
+#  ██      ██  ██ ██    ██    ██    ██    ██ ██           ██ 
+#  ███████ ██   ████    ██    ██    ██    ██ ███████ ███████ 
+#                                                            
   entities:
     0:
       name: cave
@@ -237,8 +282,18 @@ config:
       type: enemy
       enemy:
         enemyID: 0 # spike
+    7:
+      name: slime
+      type: enemy
+      enemy:
+        enemyID: 1 # slime
   
-      
+#   ██████ ██████  ███████ ██████  ██ ████████ ███████ 
+#  ██      ██   ██ ██      ██   ██ ██    ██    ██      
+#  ██      ██████  █████   ██   ██ ██    ██    ███████ 
+#  ██      ██   ██ ██      ██   ██ ██    ██         ██ 
+#   ██████ ██   ██ ███████ ██████  ██    ██    ███████ 
+#                                                      
   credits:
     - title: Game Design, Programming
       names:

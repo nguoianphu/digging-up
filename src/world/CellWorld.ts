@@ -1,8 +1,8 @@
-import { config, IEntityDef, IDropEntityDef, IChestEntityDef, IEnemyEntityDef } from "../config";
+import { config, IEntityDef, IDropEntityDef, IChestEntityDef, IEnemyEntityDef } from "../config/config";
 import { Entity, DropEntity, ChestEntity, EnemyEntity } from "./Entity";
 import { Scene } from "phaser";
 import { MainScene } from "../scenes/mainScene";
-import { BlockTypes } from "../_BlockTypes";
+import { BlockTypes } from "../config/_BlockTypes";
 
 export class Cell {
     public name = 'cell';
@@ -114,7 +114,7 @@ export class CellWorld {
             .forEach((col, i) =>
                 col.forEach((cell, j) => {
                     const blockType = blockMap[i][j];
-                    console.log(`(${i},${j}): ${blockType}`);
+                    // console.log(`(${i},${j}): ${blockType}`);
 
                     if (typeof blockType === 'string' && (blockType.startsWith('$') || blockType.startsWith('!'))) {
                         const entityID = parseInt(blockType.slice(1), 10);

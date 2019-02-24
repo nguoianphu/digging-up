@@ -1,6 +1,7 @@
 import { BlockTypes, BlockBehaviorTypes } from "./_BlockTypes";
 import { ItemTypes } from "./_ItemTypes";
-import { EnemyType } from "./_EnemyType";
+import { EnemyType, IEnemyDef } from "./_EnemyTypes";
+import { ISpriteDef } from "./_BasicTypes";
 
 
 export type IConfig = {
@@ -33,12 +34,6 @@ export interface IPlayerDef {
         activeSlot: integer;
         slots: IItemSlot[];
     }
-}
-
-export interface ISpriteDef {
-    key: string;
-    frame: string;
-    scale?: number;
 }
 
 export interface IBlockDef extends ISpriteDef {
@@ -75,19 +70,6 @@ export interface IBlockItemDef extends IItemDef {
     block: {
         builds: BlockTypes; // block id
     }
-}
-export interface IEnemyDef extends ISpriteDef {
-    enemyName: string;
-    enemyType: string;
-}
-export interface ITrapEnemyDef extends IEnemyDef {
-    trap: {
-        damage: IDamage;
-    }
-}
-
-export interface IDamage {
-    physical: number;
 }
 
 

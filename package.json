@@ -16,11 +16,11 @@
     "expose-loader": "0.7.5",
     "json-loader": "^0.5.7",
     "ts-loader": "4.4.2",
-    "typescript": "2.9.2",
+    "typescript": "^3.3.3333",
     "webpack": "4.15.0",
     "webpack-bundle-analyzer": "^3.0.3",
     "webpack-cli": "3.0.8",
-    "webpack-dev-server": "^3.1.11",
+    "webpack-dev-server": "^3.2.0",
     "yaml-loader": "^0.5.0"
   },
   "dependencies": {

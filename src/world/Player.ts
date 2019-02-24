@@ -1,10 +1,13 @@
 import { ItemSlot } from "./Item";
-import { DropEntity } from "./Entity";
+import { DropEntity, IQueueEntity } from "./Entity";
 import { ItemTypes } from "../config/_ItemTypes";
 import { IDamage } from "../config/_BasicTypes";
+import { EntityBehavior } from "../config/_EnemyTypes";
 
 
-export class Player extends Phaser.Events.EventEmitter {
+export class Player extends Phaser.Events.EventEmitter implements IQueueEntity {
+    public lastActionTurnID = -1;
+    public fatigue: number = 0;
     public cellX: number = 0;
     public cellY: number = 0;
     public oldCellX: number = 0;
@@ -13,6 +16,8 @@ export class Player extends Phaser.Events.EventEmitter {
     public activeSlotID: integer = 0;
     public tempDrop: DropEntity = null;
     public itemLimit: integer = 4;
+
+    public behaviors: EntityBehavior[] = ['queue'];
 
     public hp: integer;
     public hpMax: integer;
@@ -190,5 +195,7 @@ export class Player extends Phaser.Events.EventEmitter {
     takeDamage(damage: IDamage) {
         const { physical } = damage;
         this.hp -= physical;
+        console.log(`Player taken damage. hp=${this.hp}/${this.hpMax}`);
+
     }
 }

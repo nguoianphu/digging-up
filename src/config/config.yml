@@ -16,6 +16,8 @@ config:
     directionSnaps: 4
   player:
     hp: 4
+    move:
+      speed: 10
     inventory:
       activeSlot: 0
       slots:
@@ -137,29 +139,37 @@ config:
   enemies:
     0: 
       enemyName: spike
-      enemyTypes: [trap]
+      behaviors: [trap]
       key: 'spritesheet_complete'
       frame: 'spikes'
       trap:
+        accuracy: 100 # percent
         damage:
           physical: 1
     1: 
       enemyName: slime
-      enemyTypes: [queue, move, faceLeftRight, passiveAttack]
+      behaviors: [queue, move, gravity, faceLeftRight] # passiveAttack]
       key: 'spritesheet_complete'
       frame: 'slimeBlue'
       queue:
-        speed: 1 # 0 = no move; +ve = fast; -ve = stunned
+        queue: true
       move:
         directions: [0, 4] # 0=right, 4=left
-        speed: 1
+        speed: 10
       faceLeftRight:
         spriteFacingRight: false
         startFacingRight: true
-      passiveAttack: # does not aggro
-        damage:
-          physical: 1
-          knock: undo
+      gravity:
+        type: simple # simple = fall straight to bottom; float = fall once per turn, can move in air
+      # passiveAttack: # does not aggro, but can chase
+      #   speed: 10
+      #   accuracy: 100 # percent
+      #   damage:
+      #     physical: 1
+      #     knock: undo
+      #   chase:
+      #     vision: 5 # -1 = infinity
+          # fromSpawn: 5 # -1 = infinity
       
 
 #  ██ ████████ ███████ ███    ███ ███████ 

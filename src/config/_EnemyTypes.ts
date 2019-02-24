@@ -5,18 +5,29 @@ export enum EnemyType {
     SLIME = 1,
 }
 
+export type EntityBehavior = 'trap' | 'queue' | 'gravity' | 'move' | 'passiveAttack';
+
 
 export interface IEnemyDef extends ISpriteDef {
     enemyName: string;
-    enemyType: 'trap' | 'queue' | 'move' | 'passiveAttack';
+    behaviors: EntityBehavior[];
 }
 
 ///////////////
 // Behaviors //
 ///////////////
 
+export interface IGravityEnemyDef extends IEnemyDef {
+    gravity: {
+        // simple = fall straight to bottom; 
+        // float = fall once per turn, can move in air
+        type: 'simple' | 'float';
+    }
+}
+
 export interface ITrapEnemyDef extends IEnemyDef {
     trap: {
+        accuracy: integer; // percentage
         damage: IDamage;
     }
 }
@@ -32,6 +43,7 @@ export interface IMoveEnemyDef extends IEnemyDef {
 }
 export interface IPassiveAttackEnemyDef extends IEnemyDef {
     passiveAttack: {
+        accuracy: integer; // percentage
         damage: IDamage;
     }
 }

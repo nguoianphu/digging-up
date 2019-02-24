@@ -2,8 +2,13 @@ import { config, IDropEntityDef, IEntityDef, IChestEntityDef, IEnemyEntityDef } 
 import { Scene } from "phaser";
 import { ItemSlot } from "./Item";
 import { CellWorld } from "./CellWorld";
-import { IEnemyDef } from "../config/_EnemyTypes";
+import { IEnemyDef, EntityBehavior } from "../config/_EnemyTypes";
 
+
+export interface IQueueEntity {
+    lastActionTurnID: integer;
+    fatigue: integer;
+}
 
 let _entities: Entity[] = [];
 
@@ -12,6 +17,8 @@ export abstract class Entity extends Phaser.GameObjects.Container {
     public entityDef: IEntityDef = null; // TODO: make it optional. some entities are from def and some are not
     public name: string = null;
     public type: string = null;
+
+    public behaviors: EntityBehavior[] = [];
 
     public cellX: integer;
     public cellY: integer;
@@ -32,6 +39,14 @@ export abstract class Entity extends Phaser.GameObjects.Container {
     public static destroyEntity(entity: Entity) {
         _entities[entity.entityID].destroy();
         _entities[entity.entityID] = null;
+    }
+
+    public static getActionQueue(): IQueueEntity[] {
+        const entities: unknown[] = (_entities
+            .filter(entity => !!entity)
+            .filter(entity => entity.behaviors.includes('queue'))
+        );
+        return entities as IQueueEntity[];
     }
 
 
@@ -107,11 +122,14 @@ export class ChestEntity extends Entity {
 
 }
 
-export class EnemyEntity extends Entity {
+export class EnemyEntity extends Entity implements IQueueEntity {
 
     public enemyName: string;
-    public enemyType: string;
+    public behaviors: EntityBehavior[];
     public enemyDef: IEnemyDef;
+
+    public lastActionTurnID = -1;
+    public fatigue: integer = 0;
 
     public entityDef: IDropEntityDef;
     constructor(scene: Scene, cellWorld: CellWorld, entityDef: IEnemyEntityDef, cellX: number, cellY: number) {
@@ -119,16 +137,17 @@ export class EnemyEntity extends Entity {
 
         const { enemyID } = entityDef.enemy;
         this.enemyDef = config.enemies[enemyID];
-        const { enemyName, enemyType, key, frame } = this.enemyDef;
+        const { enemyName, behaviors, key, frame } = this.enemyDef;
 
         this.enemyName = enemyName;
-        this.enemyType = enemyType;
+        this.behaviors = behaviors;
         const sprite = scene.make.image({
             x: config.spriteWidth / 2,
             y: config.spriteHeight / 2,
             key,
             frame,
         });
+
         this.add(sprite);
     }
 

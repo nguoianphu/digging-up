@@ -8,7 +8,7 @@ import { config, ISolidBlockDef, IMiningItemDef, IBlockItemDef, IItemSlot } from
 import { GM } from '../GM';
 import { Player } from '../world/Player';
 import { CellWorld, Cell } from '../world/CellWorld';
-import { Entity, DropEntity, EnemyEntity } from '../world/Entity';
+import { Entity, DropEntity, EnemyEntity, IQueueEntity } from '../world/Entity';
 import { PlaceBlockUI } from '../UI/PlaceBlockUI';
 import { DropItemUI } from '../UI/DropItemUI';
 import { ITrapEnemyDef } from '../config/_EnemyTypes';
@@ -197,6 +197,23 @@ export class MainScene extends Phaser.Scene implements GM {
             this.doViewUpdate();
             return;
         }
+
+        const actionQueue: IQueueEntity[] = Entity.getActionQueue();
+        actionQueue.push(this.player);
+
+        console.log('actionQueue', actionQueue.slice());
+
+        actionQueue.sort((a, b) => {
+            if (a.fatigue !== b.fatigue) return a.fatigue - b.fatigue;
+            if (a.lastActionTurnID === -1) return -1;
+            if (b.lastActionTurnID === -1) return 1;
+            return 0;
+        });
+
+        // console.log('actionQueue sorted', actionQueue.slice());
+
+        const turnEntity = actionQueue[0];
+        actionQueue.forEach((entity) => entity.fatigue -= turnEntity.fatigue);
 
         if (this.inputQueue.direction.x !== 0 || this.inputQueue.direction.y !== 0) {
             this.movePlayer(this.inputQueue.direction.x, this.inputQueue.direction.y);
@@ -470,15 +487,13 @@ export class MainScene extends Phaser.Scene implements GM {
                     // Entity.destroyEntity(entity);
                 } else if (entity.type === 'enemy') {
                     const enemyEntity = entity as EnemyEntity;
-                    switch (enemyEntity.enemyType) {
-                        case 'trap': {
-                            const trap = (enemyEntity.enemyDef as ITrapEnemyDef).trap;
-                            const { damage } = trap;
+                    if (enemyEntity.behaviors.includes('trap')) {
+                        const trap = (enemyEntity.enemyDef as ITrapEnemyDef).trap;
+                        const { damage } = trap;
 
-                            this.player.takeDamage(damage);
-                            playerCell.removeEntity(entity);
-                            Entity.destroyEntity(enemyEntity);
-                        } break;
+                        this.player.takeDamage(damage);
+                        playerCell.removeEntity(entity);
+                        Entity.destroyEntity(enemyEntity);
                     }
                 }
             });
@@ -702,3 +717,4 @@ export class MainScene extends Phaser.Scene implements GM {
     //     }
     // }
 }
+

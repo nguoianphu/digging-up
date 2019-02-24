@@ -8,8 +8,10 @@ export type IConfig = {
     worldCellHeight: number,
     spriteWidth: number,
     spriteHeight: number,
-    viewWidth: number,
-    viewHeight: number,
+    viewWidth: integer,
+    viewHeight: integer,
+    viewLeft: integer,
+    viewTop: integer,
     movementTweenSpeed: number,
     controls: IUIControls;
     player: IPlayerDef;

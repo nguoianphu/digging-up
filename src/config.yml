@@ -5,6 +5,8 @@ config:
   spriteHeight: 128
   viewWidth: 7
   viewHeight: 10
+  viewLeft: -3
+  viewTop: -4
   # viewWidth: 20
   # viewHeight: 30
   movementTweenSpeed: 500

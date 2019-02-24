@@ -537,8 +537,8 @@ export class MainScene extends Phaser.Scene implements GM {
         this.player.oldCellX = this.player.cellX = cellX;
         this.player.oldCellY = this.player.cellY = cellY;
 
-        this.viewportX = Phaser.Math.Clamp(this.player.cellX - Math.floor(config.viewWidth / 2), 0, this.cellWorld.width - config.viewWidth);
-        this.viewportY = Phaser.Math.Clamp(this.player.cellY - Math.floor(config.viewHeight / 2), 0, this.cellWorld.height - config.viewHeight);
+        this.viewportX = Phaser.Math.Clamp(this.player.cellX + config.viewLeft, 0, this.cellWorld.width - config.viewWidth);
+        this.viewportY = Phaser.Math.Clamp(this.player.cellY + config.viewTop, 0, this.cellWorld.height - config.viewHeight);
 
         this.playerContainer.x = config.spriteWidth * (this.player.cellX - this.viewportX);
         this.playerContainer.y = config.spriteHeight * (this.player.cellY - this.viewportY);
@@ -574,8 +574,8 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     async updateCells() {
-        const viewportX = Phaser.Math.Clamp(this.player.cellX - Math.floor(config.viewWidth / 2), 0, this.cellWorld.width - config.viewWidth);
-        const viewportY = Phaser.Math.Clamp(this.player.cellY - Math.floor(config.viewHeight / 2), 0, this.cellWorld.height - config.viewHeight);
+        const viewportX = Phaser.Math.Clamp(this.player.cellX + config.viewLeft, 0, this.cellWorld.width - config.viewWidth);
+        const viewportY = Phaser.Math.Clamp(this.player.cellY + config.viewTop, 0, this.cellWorld.height - config.viewHeight);
 
         const viewCells = this.cellWorld.getCells(viewportX, viewportY, config.viewWidth, config.viewHeight);
         viewCells.forEach((col, xx) => {

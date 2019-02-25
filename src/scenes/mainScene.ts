@@ -57,6 +57,8 @@ export class MainScene extends Phaser.Scene implements GM {
     slotButtons: CardButton[];
     playerSprite: Sprite;
 
+    private resolveInput: () => void;
+
     public inputLock: string[] = [];
     private viewIsDirty: string[] = [];
     get canInput() {
@@ -151,19 +153,24 @@ export class MainScene extends Phaser.Scene implements GM {
         })
         this.player.changeActiveSlot(config.player.inventory.activeSlot);
         this.player.initHP(config.player.hp);
+
+        this.doActionLoop();
     }
 
     update(time: number, delta: number): void {
+        const playerNeedMove = (
+            this.player.oldCellX !== this.player.cellX ||
+            this.player.oldCellY !== this.player.cellY
+        );
+        if (!playerNeedMove) {
+            this.playerSprite.play('player_idle');
+        }
+
+
         if (this.canInput) {
-            this.onInputLockUpdated();
+            this.onInputLockUpdated('update');
+
             this.doViewUpdate();
-            const playerNeedMove = (
-                this.player.oldCellX !== this.player.cellX ||
-                this.player.oldCellY !== this.player.cellY
-            );
-            if (!playerNeedMove) {
-                this.playerSprite.play('player_idle');
-            }
         }
     }
 
@@ -177,7 +184,7 @@ export class MainScene extends Phaser.Scene implements GM {
         }
     }
 
-    onInputLockUpdated() {
+    onInputLockUpdated(log?: string) {
         if (!this.canInput) {
             this.doViewUpdate();
             return;
@@ -198,41 +205,65 @@ export class MainScene extends Phaser.Scene implements GM {
             return;
         }
 
-        const actionQueue: IQueueEntity[] = Entity.getActionQueue();
-        actionQueue.push(this.player);
-
-        console.log('actionQueue', actionQueue.slice());
-
-        actionQueue.sort((a, b) => {
-            if (a.fatigue !== b.fatigue) return a.fatigue - b.fatigue;
-            if (a.lastActionTurnID === -1) return -1;
-            if (b.lastActionTurnID === -1) return 1;
-            return 0;
-        });
-
-        // console.log('actionQueue sorted', actionQueue.slice());
-
-        const turnEntity = actionQueue[0];
-        actionQueue.forEach((entity) => entity.fatigue -= turnEntity.fatigue);
-
         if (this.inputQueue.direction.x !== 0 || this.inputQueue.direction.y !== 0) {
             this.movePlayer(this.inputQueue.direction.x, this.inputQueue.direction.y);
-        }
-        if (this.inputQueue.slotInput !== -1) {
+            this.resolveInput();
+        } else if (this.inputQueue.slotInput !== -1) {
             this.triggerSlot(this.inputQueue.slotInput);
             this.inputQueue.slotInput = -1;
+            this.resolveInput();
         }
-        this.doViewUpdate();
+
+    }
+
+    async doActionLoop() {
+        while (1) {
+            const actionQueue: IQueueEntity[] = Entity.getActionQueue();
+            actionQueue.push(this.player);
+
+            // console.log('actionQueue', actionQueue.slice());
+            actionQueue.sort((a, b) => {
+                if (a.fatigue !== b.fatigue) return a.fatigue - b.fatigue;
+                if (a.lastActionTurnID === -1) return -1;
+                if (b.lastActionTurnID === -1) return 1;
+                return 0;
+            });
+            console.log('actionQueue updated', actionQueue.map(e => ({ fatigue: e.fatigue, e })));
+
+
+            const turnEntity = actionQueue[0];
+            actionQueue.forEach((entity) => entity.fatigue -= turnEntity.fatigue);
+
+            if (turnEntity.name !== 'player') {
+                this.addInputLock('doActionLoop');
+            }
+
+            await this.waitForTurnEnd();
+
+            if (turnEntity.name !== 'player') {
+                this.removeInputLock('doActionLoop');
+            }
+            await this.doViewUpdate();
+        }
+    }
+
+    async waitForTurnEnd() {
+        return new Promise((resolve) => {
+            this.resolveInput = () => {
+                resolve();
+                this.resolveInput = () => { };
+            }
+        })
     }
 
     addInputLock(reason: string) {
         this.inputLock.push(reason);
-        // console.log(`addInputLock(reason: ${reason}), ${this.inputLock.length}`);
+        console.log(`addInputLock(reason: ${reason}), ${this.inputLock.length}`);
     }
 
     removeInputLock(reason: string) {
         this.inputLock.splice(this.inputLock.indexOf(reason), 1);
-        // console.log(`removeInputLock(reason: ${reason}), ${this.inputLock.length}`);
+        console.log(`removeInputLock(reason: ${reason}), ${this.inputLock.length}`);
         this.onInputLockUpdated();
     }
 
@@ -464,6 +495,7 @@ export class MainScene extends Phaser.Scene implements GM {
             }
         }
 
+        this.player.fatigue += 10;
         this.player.cellX = newCellX;
         this.player.cellY = newCellY;
 

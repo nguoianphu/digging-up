@@ -8,6 +8,7 @@ import { IEnemyDef, EntityBehavior } from "../config/_EnemyTypes";
 export interface IQueueEntity {
     lastActionTurnID: integer;
     fatigue: integer;
+    name: string;
 }
 
 let _entities: Entity[] = [];

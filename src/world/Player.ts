@@ -19,6 +19,7 @@ export class Player extends Phaser.Events.EventEmitter implements IQueueEntity {
 
     public behaviors: EntityBehavior[] = ['queue'];
 
+    public name = 'player';
     public hp: integer;
     public hpMax: integer;
 

@@ -3,12 +3,14 @@ import { Scene } from "phaser";
 import { ItemSlot } from "./Item";
 import { CellWorld } from "./CellWorld";
 import { IEnemyDef, EntityBehavior } from "../config/_EnemyTypes";
+import { MainScene } from "../scenes/mainScene";
 
 
 export interface IQueueEntity {
     lastActionTurnID: integer;
     fatigue: integer;
     name: string;
+    action: (scene: MainScene, actionQueue: IQueueEntity[]) => Promise<void>;
 }
 
 let _entities: Entity[] = [];
@@ -150,6 +152,10 @@ export class EnemyEntity extends Entity implements IQueueEntity {
         });
 
         this.add(sprite);
+    }
+
+    async action() {
+        this.fatigue += 10;
     }
 
 }

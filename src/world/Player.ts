@@ -3,11 +3,14 @@ import { DropEntity, IQueueEntity } from "./Entity";
 import { ItemTypes } from "../config/_ItemTypes";
 import { IDamage } from "../config/_BasicTypes";
 import { EntityBehavior } from "../config/_EnemyTypes";
+import { MainScene } from "../scenes/mainScene";
 
 
 export class Player extends Phaser.Events.EventEmitter implements IQueueEntity {
+    // IQueueEntity
     public lastActionTurnID = -1;
     public fatigue: number = 0;
+
     public cellX: number = 0;
     public cellY: number = 0;
     public oldCellX: number = 0;
@@ -30,6 +33,26 @@ export class Player extends Phaser.Events.EventEmitter implements IQueueEntity {
     constructor() {
         super();
         this.slots = new Array(this.itemLimit).fill(1).map(_ => new ItemSlot(ItemTypes.EMPTY, 0));
+    }
+
+    // IQueueEntity
+    async action(scene: MainScene, actionQueue: IQueueEntity[]) {
+        scene.canInput = true;
+        console.log('scene.inputQueue', scene.inputQueue);
+        do {
+            const inputQueue = scene.inputQueue;
+            // scene.inputQueue = null;
+            if (inputQueue.directionX !== 0 || inputQueue.directionY !== 0) {
+                scene.canInput = false;
+                scene.movePlayer(inputQueue.directionX, inputQueue.directionY);
+            } else if (inputQueue.slotInput !== -1) {
+                scene.canInput = false;
+                scene.triggerSlot(inputQueue.slotInput);
+                inputQueue.slotInput = -1;
+            } else {
+                await scene.waitForInput();
+            }
+        } while (scene.canInput);
     }
 
     getActiveSlot() {

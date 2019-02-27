@@ -1,6 +1,6 @@
 
 import { preload as _preload, setUpAnimations as _setUpAnimations } from '../preload';
-import { EventContext } from '../Utils';
+import { EventContext, waitForTimeout } from '../Utils';
 import { CardButton } from '../UI/CardButton';
 import { ItemSlot } from '../world/Item';
 
@@ -12,6 +12,7 @@ import { Entity, DropEntity, EnemyEntity, IQueueEntity } from '../world/Entity';
 import { PlaceBlockUI } from '../UI/PlaceBlockUI';
 import { DropItemUI } from '../UI/DropItemUI';
 import { ITrapEnemyDef } from '../config/_EnemyTypes';
+import { resolve } from 'url';
 
 type Pointer = Phaser.Input.Pointer;
 type Container = Phaser.GameObjects.Container;
@@ -61,13 +62,8 @@ export class MainScene extends Phaser.Scene implements GM {
 
     public inputLock: string[] = [];
     private viewIsDirty: string[] = [];
-    get canInput() {
-        return this.inputLock.length === 0;
-    }
-    public inputQueue = {
-        direction: { x: 0, y: 0 },
-        slotInput: -1,
-    };
+    public canInput: boolean = false;
+    public inputQueue = { directionX: 0, directionY: 0, slotInput: -1 };
 
     get _entities() {
         return Entity.getAllEntities();
@@ -136,7 +132,7 @@ export class MainScene extends Phaser.Scene implements GM {
         this.initPlayer(this.cellWorld.midWidth, 0);
         this.initView();
         this.updateCells();
-        this.animatePlayer();
+        this.animatePlayer().then(() => this.playerSprite.play('player_idle'));
         this.createSlotButtons();
         this.createJoystick();
         this.createPlaceBlockUI();
@@ -158,113 +154,114 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     update(time: number, delta: number): void {
+        // const playerNeedMove = (
+        //     this.player.oldCellX !== this.player.cellX ||
+        //     this.player.oldCellY !== this.player.cellY
+        // );
+        // if (!playerNeedMove) {
+        //     this.playerSprite.play('player_idle');
+        // }
+    }
+
+    async resolveActions() {
+        let isResolved = true;
+        do {
+            isResolved = true;
+            await this.doViewUpdate();
+            await waitForTimeout(100);
+
+            this.player.oldCellX = this.player.cellX;
+            this.player.oldCellY = this.player.cellY;
+            isResolved = this.checkEntityAndInteract() && isResolved;
+            isResolved = this.checkFootholdAndFall() && isResolved;
+
+        } while (!isResolved);
+    }
+
+    async doViewUpdate() {
+        console.log(`doViewUpdate`);
+        debugger;
+        this.updateCells();
+
         const playerNeedMove = (
             this.player.oldCellX !== this.player.cellX ||
             this.player.oldCellY !== this.player.cellY
         );
-        if (!playerNeedMove) {
-            this.playerSprite.play('player_idle');
+        if (playerNeedMove) {
+            await Promise.all([
+                this.tweenView(this.viewportX, this.viewportY),
+                this.animatePlayer().then(() => this.playerSprite.play('player_idle')),
+            ]);
         }
 
-
-        if (this.canInput) {
-            this.onInputLockUpdated('update');
-
-            this.doViewUpdate();
-        }
     }
 
-    doViewUpdate() {
-        if (this.viewIsDirty.length > 0) {
-            console.log(`doViewUpdate(reasons:[${this.viewIsDirty.join(',')}])`);
-
-            this.viewIsDirty = [];
-            this.updateCells();
-            this.animatePlayer();
-        }
-    }
-
-    onInputLockUpdated(log?: string) {
-        if (!this.canInput) {
-            this.doViewUpdate();
-            return;
-        }
-
+    doPhysicsUpdate(log?: string): boolean {
         this.checkEntityAndInteract();
-        if (!this.canInput) {
-            this.doViewUpdate();
-            return;
-        }
 
         this.player.oldCellX = this.player.cellX;
         this.player.oldCellY = this.player.cellY;
 
         this.checkFootholdAndFall();
-        if (!this.canInput) {
-            this.doViewUpdate();
-            return;
-        }
+        return false;
+    }
 
-        if (this.inputQueue.direction.x !== 0 || this.inputQueue.direction.y !== 0) {
-            this.movePlayer(this.inputQueue.direction.x, this.inputQueue.direction.y);
-            this.resolveInput();
-        } else if (this.inputQueue.slotInput !== -1) {
-            this.triggerSlot(this.inputQueue.slotInput);
-            this.inputQueue.slotInput = -1;
-            this.resolveInput();
+    queueInput(a: { directionX?: number, directionY?: number, slotInput?: number }) {
+        if (!this.inputQueue) {
+            this.inputQueue = {
+                directionX: 0,
+                directionY: 0,
+                slotInput: -1,
+            };
         }
+        if (a.directionX != null) this.inputQueue.directionX = a.directionX;
+        if (a.directionY != null) this.inputQueue.directionY = a.directionY;
+        if (a.slotInput) this.inputQueue.slotInput = a.slotInput;
+        this.resolveInput();
+    }
 
+    private makeActionQueue(): IQueueEntity[] {
+
+        const actionQueue: IQueueEntity[] = Entity.getActionQueue();
+        actionQueue.push(this.player);
+
+        // console.log('actionQueue', actionQueue.slice());
+        actionQueue.sort((a, b) => {
+            if (a.fatigue !== b.fatigue) return a.fatigue - b.fatigue;
+            if (a.lastActionTurnID === -1) return -1;
+            if (b.lastActionTurnID === -1) return 1;
+            return 0;
+        });
+        return actionQueue;
     }
 
     async doActionLoop() {
         while (1) {
-            const actionQueue: IQueueEntity[] = Entity.getActionQueue();
-            actionQueue.push(this.player);
-
-            // console.log('actionQueue', actionQueue.slice());
-            actionQueue.sort((a, b) => {
-                if (a.fatigue !== b.fatigue) return a.fatigue - b.fatigue;
-                if (a.lastActionTurnID === -1) return -1;
-                if (b.lastActionTurnID === -1) return 1;
-                return 0;
-            });
-            console.log('actionQueue updated', actionQueue.map(e => ({ fatigue: e.fatigue, e })));
-
-
+            const actionQueue = this.makeActionQueue();
             const turnEntity = actionQueue[0];
-            actionQueue.forEach((entity) => entity.fatigue -= turnEntity.fatigue);
-
-            if (turnEntity.name !== 'player') {
-                this.addInputLock('doActionLoop');
+            const fatigue = turnEntity.fatigue;
+            if (fatigue > 0) {
+                actionQueue.forEach((entity) => entity.fatigue -= fatigue);
+                console.log(`actionQueue updated\n${actionQueue.map(e => `${e.fatigue}: ${e.name}`).join('\n')}`);
             }
 
-            await this.waitForTurnEnd();
+            await waitForTimeout(10);
+            debugger;
+            console.log(`${turnEntity.name}'s turn`);
 
-            if (turnEntity.name !== 'player') {
-                this.removeInputLock('doActionLoop');
-            }
-            await this.doViewUpdate();
+            await turnEntity.action(this, actionQueue);
+
+            await this.resolveActions();
         }
     }
 
-    async waitForTurnEnd() {
+    async waitForInput() {
         return new Promise((resolve) => {
             this.resolveInput = () => {
                 resolve();
                 this.resolveInput = () => { };
             }
         })
-    }
-
-    addInputLock(reason: string) {
-        this.inputLock.push(reason);
-        console.log(`addInputLock(reason: ${reason}), ${this.inputLock.length}`);
-    }
-
-    removeInputLock(reason: string) {
-        this.inputLock.splice(this.inputLock.indexOf(reason), 1);
-        console.log(`removeInputLock(reason: ${reason}), ${this.inputLock.length}`);
-        this.onInputLockUpdated();
     }
 
     createSlotButtons() {
@@ -295,7 +292,7 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     onSlotButtonPressed(slotID: integer) {
-        this.inputQueue.slotInput = slotID;
+        this.queueInput({ slotInput: slotID });
     }
 
     triggerSlot(slotID: integer) {
@@ -448,8 +445,10 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     queueMovePlayer(dx: integer, dy: integer) {
-        this.inputQueue.direction.x = dx;
-        this.inputQueue.direction.y = dy;
+        this.queueInput({
+            directionX: dx,
+            directionY: dy,
+        });
     }
 
     movePlayer(dx: integer, dy: integer) {
@@ -498,17 +497,14 @@ export class MainScene extends Phaser.Scene implements GM {
         this.player.fatigue += 10;
         this.player.cellX = newCellX;
         this.player.cellY = newCellY;
-
-        if (!(this.player.oldCellX === this.player.cellX && this.player.oldCellY === this.player.cellY)) {
-            this.viewIsDirty.push('movePlayer');
-            this.animatePlayer();
-        }
     }
 
-    checkEntityAndInteract() {
+    checkEntityAndInteract(): boolean {
+        let isResolved = true;
         const playerCell = this.cellWorld.getCell(this.player.cellX, this.player.cellY);
         if (playerCell.entityStack.length > 0) {
             playerCell.entityStack.forEach((entityID) => {
+
                 const entity = Entity.getEntityByID(entityID);
                 if (entity.type === 'drop') {
                     const dropEntity = entity as DropEntity;
@@ -517,6 +513,8 @@ export class MainScene extends Phaser.Scene implements GM {
                     entity.setVisible(false);
                     this.player.setTempSlot(dropEntity);
                     // Entity.destroyEntity(entity);
+                    isResolved = true;
+
                 } else if (entity.type === 'enemy') {
                     const enemyEntity = entity as EnemyEntity;
                     if (enemyEntity.behaviors.includes('trap')) {
@@ -526,17 +524,23 @@ export class MainScene extends Phaser.Scene implements GM {
                         this.player.takeDamage(damage);
                         playerCell.removeEntity(entity);
                         Entity.destroyEntity(enemyEntity);
+                        isResolved = true;
                     }
                 }
+
             });
         }
+
+        return isResolved;
     }
 
-    checkFootholdAndFall() {
+    checkFootholdAndFall(): boolean {
         const belowCell = this.cellWorld.getCell(this.player.cellX, this.player.cellY + 1);
         if (belowCell.physicsType === 'air' || belowCell.physicsType === 'entity') {
             this.movePlayer(0, 1);
+            return false;
         }
+        return true;
     }
 
     checkTempSlotAndDrop() {
@@ -592,12 +596,8 @@ export class MainScene extends Phaser.Scene implements GM {
         this.playerContainer.y = config.spriteHeight * (this.player.cellY - this.viewportY);
 
     }
-    animatePlayer(): void {
-        const playerNeedMove = (
-            this.player.oldCellX !== this.player.cellX ||
-            this.player.oldCellY !== this.player.cellY
-        );
-        if (playerNeedMove) {
+    async animatePlayer() {
+        return new Promise((resolve) => {
             this.add.tween({
                 targets: [this.playerContainer],
                 x: config.spriteWidth * (this.player.cellX - this.viewportX),
@@ -608,12 +608,10 @@ export class MainScene extends Phaser.Scene implements GM {
                     this.playerSprite.play('player_walk');
                 },
                 onComplete: () => {
-                    this.removeInputLock('animatePlayer');
+                    resolve();
                 },
             });
-            this.addInputLock('animatePlayer');
-
-        }
+        });
     }
 
     initView() {
@@ -621,7 +619,7 @@ export class MainScene extends Phaser.Scene implements GM {
         this.view.y = -(config.spriteHeight * this.viewportY);
     }
 
-    async updateCells() {
+    updateCells() {
         const viewportX = Phaser.Math.Clamp(this.player.cellX + config.viewLeft, 0, this.cellWorld.width - config.viewWidth);
         const viewportY = Phaser.Math.Clamp(this.player.cellY + config.viewTop, 0, this.cellWorld.height - config.viewHeight);
 
@@ -636,17 +634,6 @@ export class MainScene extends Phaser.Scene implements GM {
         const activeSlot = this.player.getActiveSlot();;
         if (this.placeBlockUI && activeSlot && activeSlot.itemDef.types.includes('block')) {
             this.placeBlockUI.updateButtons(this.player, this.viewportX, this.viewportY, this.player.getActiveSlot());
-        }
-
-
-        const playerNeedMove = (
-            this.player.oldCellX !== this.player.cellX ||
-            this.player.oldCellY !== this.player.cellY
-        );
-        if (playerNeedMove) {
-            this.addInputLock('tweenView');
-            await this.tweenView(this.viewportX, this.viewportY);
-            this.removeInputLock('tweenView');
         }
     }
     updateCell(cell: Cell, xx: number, yy: number): void {

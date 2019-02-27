@@ -168,7 +168,7 @@ export class MainScene extends Phaser.Scene implements GM {
         do {
             isResolved = true;
             await this.doViewUpdate();
-            await waitForTimeout(100);
+            await waitForTimeout(10);
 
             this.player.oldCellX = this.player.cellX;
             this.player.oldCellY = this.player.cellY;
@@ -180,7 +180,7 @@ export class MainScene extends Phaser.Scene implements GM {
 
     async doViewUpdate() {
         console.log(`doViewUpdate`);
-        debugger;
+        // debugger;
         this.updateCells();
 
         const playerNeedMove = (
@@ -246,7 +246,7 @@ export class MainScene extends Phaser.Scene implements GM {
             }
 
             await waitForTimeout(10);
-            debugger;
+            // debugger;
             console.log(`${turnEntity.name}'s turn`);
 
             await turnEntity.action(this, actionQueue);

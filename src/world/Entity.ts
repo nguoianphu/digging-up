@@ -26,7 +26,7 @@ export abstract class Entity extends Phaser.GameObjects.Container {
     public cellX: integer;
     public cellY: integer;
 
-    private cellWorld: CellWorld;
+    protected cellWorld: CellWorld;
 
     public static getEntityID() {
         return _entities.length;
@@ -154,8 +154,57 @@ export class EnemyEntity extends Entity implements IQueueEntity {
         this.add(sprite);
     }
 
-    async action() {
-        this.fatigue += 10;
+    async action(scene: MainScene, actionQueue: IQueueEntity[]) {
+        const rand = Math.random();
+        if (rand > 0.2) {
+            const dx = Math.random() > 0.5 ? -1 : 1;
+            this.move(scene, dx, 0);
+        } else {
+            this.fatigue += 10;
+
+        }
     }
 
+    move(scene: MainScene, dx: integer, dy: integer) {
+        // console.log(`movePlayer(${dx}, ${dy})`, new Error());
+
+        let newCellX = Phaser.Math.Clamp(this.cellX + dx, 0, this.cellWorld.width - 1);
+        let newCellY = Phaser.Math.Clamp(this.cellY + dy, 0, this.cellWorld.height - 1);
+
+        let destCell = this.cellWorld.getCell(newCellX, newCellY);
+        if (newCellX === this.cellX && newCellY === this.cellY) {
+            // do something if touch world boundary or decided to not move
+        } else if (destCell) {
+            // interact with cell
+            let worldChanged = false;
+            let canMove = true;
+
+            if (destCell.physicsType === 'solid') {
+                canMove = false;
+            }
+            if (!canMove) {
+                newCellX = this.cellX;
+                newCellY = this.cellY;
+            } else {
+                this.fatigue += 10;
+                this.cellX = newCellX;
+                this.cellY = newCellY;
+
+
+                scene.add.tween({
+                    targets: [this],
+                    x: config.spriteWidth * (this.cellX),
+                    y: config.spriteHeight * (this.cellY),
+                    duration: config.movementTweenSpeed,
+                    ease: 'Linear',
+                    onStart: () => {
+                        
+                    },
+                    onComplete: () => {
+                        // resolve();
+                    },
+                });
+            }
+        }
+    }
 }

@@ -216,7 +216,7 @@ export class MainScene extends Phaser.Scene implements GM {
         }
         if (a.directionX != null) this.inputQueue.directionX = a.directionX;
         if (a.directionY != null) this.inputQueue.directionY = a.directionY;
-        if (a.slotInput) this.inputQueue.slotInput = a.slotInput;
+        if (a.slotInput != null) this.inputQueue.slotInput = a.slotInput;
         this.resolveInput();
     }
 

@@ -5,7 +5,7 @@ export enum EnemyType {
     SLIME = 1,
 }
 
-export type EntityBehavior = 'trap' | 'queue' | 'gravity' | 'move' | 'passiveAttack';
+export type EntityBehavior = 'trap' | 'queue' | 'gravity' | 'move' | 'passiveAttack' | 'faceLeftRight';
 
 
 export interface IEnemyDef extends ISpriteDef {

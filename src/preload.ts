@@ -60,7 +60,7 @@ export function setUpAnimations(this: Phaser.Scene) {
             { frames: [0] }
         ),
         repeat: 0,
-        frameRate: 4
+        frameRate: 1
     });
     this.anims.create({
         key: 'player_walk',
@@ -70,5 +70,29 @@ export function setUpAnimations(this: Phaser.Scene) {
         ),
         repeat: -1,
         frameRate: 5
+    });
+    this.anims.create({
+        key: 'slime_idle',
+        frames: [{
+            key: 'spritesheet_complete',
+            frame: 'slimeBlue',
+        }],
+        repeat: -1,
+        frameRate: 1
+    });
+    this.anims.create({
+        key: 'slime_walk',
+        frames: [
+            {
+                key: 'spritesheet_complete',
+                frame: 'slimeBlue_move',
+            },
+            {
+                key: 'spritesheet_complete',
+                frame: 'slimeBlue',
+            },
+        ],
+        repeat: -1,
+        frameRate: 10
     });
 }

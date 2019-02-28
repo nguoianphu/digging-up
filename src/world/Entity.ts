@@ -2,7 +2,7 @@ import { config, IDropEntityDef, IEntityDef, IChestEntityDef, IEnemyEntityDef } 
 import { Scene } from "phaser";
 import { ItemSlot } from "./Item";
 import { CellWorld } from "./CellWorld";
-import { IEnemyDef, EntityBehavior } from "../config/_EnemyTypes";
+import { IEnemyDef, EntityBehavior, IFaceLeftRightEnemyDef } from "../config/_EnemyTypes";
 import { MainScene } from "../scenes/mainScene";
 
 
@@ -25,6 +25,9 @@ export abstract class Entity extends Phaser.GameObjects.Container {
 
     public cellX: integer;
     public cellY: integer;
+
+    public oldCellX: integer;
+    public oldCellY: integer;
 
     protected cellWorld: CellWorld;
 
@@ -55,8 +58,8 @@ export abstract class Entity extends Phaser.GameObjects.Container {
 
     constructor(scene: Scene, cellWorld: CellWorld, entityDef: IEntityDef, cellX: number, cellY: number) {
         super(scene, cellX * config.spriteWidth, cellY * config.spriteHeight);
-        this.cellX = cellX;
-        this.cellY = cellY;
+        this.cellX = this.oldCellX = cellX;
+        this.cellY = this.oldCellY = cellY;
         this.cellWorld = cellWorld;
         this.entityID = Entity.getEntityID();
         _entities.push(this);
@@ -134,7 +137,10 @@ export class EnemyEntity extends Entity implements IQueueEntity {
     public lastActionTurnID = -1;
     public fatigue: integer = 0;
 
-    public entityDef: IDropEntityDef;
+    public entityDef: IEntityDef;
+
+    public sprite: Phaser.GameObjects.Sprite = null;
+
     constructor(scene: Scene, cellWorld: CellWorld, entityDef: IEnemyEntityDef, cellX: number, cellY: number) {
         super(scene, cellWorld, entityDef, cellX, cellY);
 
@@ -144,29 +150,32 @@ export class EnemyEntity extends Entity implements IQueueEntity {
 
         this.enemyName = enemyName;
         this.behaviors = behaviors;
-        const sprite = scene.make.image({
+        this.sprite = scene.make.sprite({
             x: config.spriteWidth / 2,
             y: config.spriteHeight / 2,
             key,
             frame,
         });
 
-        this.add(sprite);
+        this.add(this.sprite);
     }
 
     async action(scene: MainScene, actionQueue: IQueueEntity[]) {
         const rand = Math.random();
         if (rand > 0.2) {
             const dx = Math.random() > 0.5 ? -1 : 1;
-            this.move(scene, dx, 0);
+            await this.move(scene, dx, 0);
         } else {
+            // do nothing
             this.fatigue += 10;
 
         }
     }
 
-    move(scene: MainScene, dx: integer, dy: integer) {
+    async move(scene: MainScene, dx: integer, dy: integer) {
         // console.log(`movePlayer(${dx}, ${dy})`, new Error());
+        this.oldCellX = this.cellX;
+        this.oldCellY = this.cellY;
 
         let newCellX = Phaser.Math.Clamp(this.cellX + dx, 0, this.cellWorld.width - 1);
         let newCellY = Phaser.Math.Clamp(this.cellY + dy, 0, this.cellWorld.height - 1);
@@ -186,25 +195,40 @@ export class EnemyEntity extends Entity implements IQueueEntity {
                 newCellX = this.cellX;
                 newCellY = this.cellY;
             } else {
-                this.fatigue += 10;
+                this.fatigue += 20;
                 this.cellX = newCellX;
                 this.cellY = newCellY;
 
+                if (this.behaviors.includes('faceLeftRight')) {
+                    this.updateFaceLeftRight(this.cellX - this.oldCellX);
+                }
 
-                scene.add.tween({
-                    targets: [this],
-                    x: config.spriteWidth * (this.cellX),
-                    y: config.spriteHeight * (this.cellY),
-                    duration: config.movementTweenSpeed,
-                    ease: 'Linear',
-                    onStart: () => {
-                        
-                    },
-                    onComplete: () => {
-                        // resolve();
-                    },
+                return new Promise((resolve) => {
+                    scene.add.tween({
+                        targets: [this],
+                        x: config.spriteWidth * (this.cellX),
+                        y: config.spriteHeight * (this.cellY),
+                        duration: config.movementTweenSpeed,
+                        ease: 'Linear',
+                        onStart: () => {
+                            this.sprite.play('slime_walk');
+                        },
+                        onComplete: () => {
+                            this.sprite.play('slime_idle');
+                            resolve();
+                        },
+                    });
                 });
+
             }
         }
+    }
+
+    updateFaceLeftRight(facingDir: integer) {
+        const faceLeftRight = (this.enemyDef as IFaceLeftRightEnemyDef).faceLeftRight;
+        const spriteDir = faceLeftRight.spriteFacingRight ? 1 : -1;
+        const scaleDir = spriteDir * facingDir;
+
+        this.sprite.setScale(scaleDir, this.sprite.scaleY);
     }
 }

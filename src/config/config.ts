@@ -2,9 +2,10 @@ import { BlockTypes, BlockBehaviorTypes } from "./_BlockTypes";
 import { ItemTypes } from "./_ItemTypes";
 import { EnemyType, IEnemyDef } from "./_EnemyTypes";
 import { ISpriteDef } from "./_BasicTypes";
+import { Immutable } from "../Utils/ImmutableType";
 
 
-export type IConfig = {
+export type IConfig = Immutable<{
     worldCellWidth: number,
     worldCellHeight: number,
     spriteWidth: number,
@@ -25,7 +26,7 @@ export type IConfig = {
     entities: { [x: number]: IEntityDef }
     enemies: { [x: number]: IEnemyDef }
     credits: ICreditEntry[];
-}
+}>
 
 export interface IPlayerDef {
     hp: integer;

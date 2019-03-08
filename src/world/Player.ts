@@ -17,7 +17,7 @@ export class Player extends Phaser.Events.EventEmitter implements IQueueEntity {
     public oldCellY: number = 0;
     public slots: ItemSlot[] = [];
     public activeSlotID: integer = 0;
-    public tempDrop: DropEntity = null;
+    public tempDrop: DropEntity | null = null;
     public itemLimit: integer = 4;
 
     public behaviors: EntityBehavior[] = ['queue'];
@@ -207,7 +207,7 @@ export class Player extends Phaser.Events.EventEmitter implements IQueueEntity {
         if (!isSilent) this.emit(Player.onItemUpdated, slotID);
     }
 
-    setTempSlot(dropEntity: DropEntity) {
+    setTempSlot(dropEntity: DropEntity | null) {
         this.tempDrop = dropEntity;
         this.emit(Player.onTempSlotUpdated);
     }
@@ -217,7 +217,7 @@ export class Player extends Phaser.Events.EventEmitter implements IQueueEntity {
     }
 
     takeDamage(damage: IDamage) {
-        const { physical } = damage;
+        const { physical = 0 } = damage;
         this.hp -= physical;
         console.log(`Player taken damage. hp=${this.hp}/${this.hpMax}`);
 

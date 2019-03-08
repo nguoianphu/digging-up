@@ -3,6 +3,7 @@ import { Entity, DropEntity, ChestEntity, EnemyEntity } from "./Entity";
 import { Scene } from "phaser";
 import { MainScene } from "../scenes/mainScene";
 import { BlockTypes } from "../config/_BlockTypes";
+import { Immutable } from "../Utils/ImmutableType";
 
 export class Cell {
     public name = 'cell';
@@ -104,7 +105,7 @@ export class CellWorld {
             );
     }
 
-    loadWorld(blockMap: (string | number)[][]) {
+    loadWorld(blockMap: Immutable<(string | number)[][]>) {
         const mapWidth = blockMap.reduce((acc, col) => Math.max(acc, col.length), 0);
         const mapHeight = blockMap.length;
         if (mapWidth !== this.width || mapHeight !== this.height) {
@@ -153,7 +154,7 @@ export class CellWorld {
         return map[0].map((col, i) => map.map(row => row[i]));
     }
 
-    getCell(x: integer, y: integer): Cell {
+    getCell(x: integer, y: integer): Cell | null {
         const i = y;
         const j = x;
         if (!this.map[i]) return null;

@@ -65,10 +65,6 @@ export class MainScene extends Phaser.Scene implements GM {
     public canInput: boolean = false;
     public inputQueue = { directionX: 0, directionY: 0, slotInput: -1 };
 
-    get _entities() {
-        return Entity.getAllEntities();
-    }
-
     constructor() {
         super({
             key: "MainScene"
@@ -124,7 +120,7 @@ export class MainScene extends Phaser.Scene implements GM {
 
 
         let blockMap = config.map.blockMap;
-        let sheetMap: { values: string[][] } = null;
+        let sheetMap: { values: string[][] } | null = null;
         if (config.map.useSheetMap && (sheetMap = this.sys.cache.json.get('sheetMap'))) {
             blockMap = sheetMap.values.map((rows) => rows.map(val => (val.startsWith('$') || val.startsWith('!')) ? val : Number(val)));
         }
@@ -412,7 +408,9 @@ export class MainScene extends Phaser.Scene implements GM {
 
             const { x: dx, y: dy } = direction;
             const targetSlot = this.player.getActiveSlot();
-            if (targetSlot.itemDef.types.includes('block')) {
+            if (!targetSlot) {
+                console.warn('targetSlot not found');
+            } else if (targetSlot.itemDef.types.includes('block')) {
                 const blockID = (<IBlockItemDef>targetSlot.itemDef).block.builds;
                 const cell = this.cellWorld.getCell(this.player.cellX + dx, this.player.cellY + dy);
                 const success = this.tryAddBlock(cell, blockID);
@@ -642,25 +640,29 @@ export class MainScene extends Phaser.Scene implements GM {
         if (bufferedCellContainer) {
             (bufferedCellContainer
                 .removeAll(true)
-                .add(stack.map((blockID) => {
-                    const { name, key, frame } = config.blocks[blockID];
-                    if (key === '') return null;
-                    return (this.add.image(0, 0, key, frame)
-                        .setOrigin(0)
-                    );
-                }).filter(a => !!a))
+                .add(stack
+                    .filter((blockID) => config.blocks[blockID].key !== '')
+                    .map((blockID) => {
+                        const { name, key, frame } = config.blocks[blockID];
+                        return (this.add.image(0, 0, key, frame)
+                            .setOrigin(0)
+                        );
+                    }).filter(a => !!a)
+                )
             );
         } else {
             const cellContainer = this.add.container(
                 config.spriteWidth * xx,
                 config.spriteHeight * yy,
-                stack.map((blockID) => {
-                    const { key, frame } = config.blocks[blockID];
-                    if (key === '') return null;
-                    return (this.add.image(0, 0, key, frame)
-                        .setOrigin(0)
-                    );
-                }).filter(a => !!a)
+                (stack
+                    .filter((blockID) => config.blocks[blockID].key !== '')
+                    .map((blockID) => {
+                        const { key, frame } = config.blocks[blockID];
+                        return (this.add.image(0, 0, key, frame)
+                            .setOrigin(0)
+                        );
+                    }).filter(a => !!a)
+                )
             );
             cellContainer.setData('id', id);
             this.cellContainerBuffer.push(cellContainer);

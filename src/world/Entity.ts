@@ -211,11 +211,13 @@ export class EnemyEntity extends Entity implements IQueueEntity {
                 const viewportLeft = scene.viewportX;
                 const viewportTop = scene.viewportY;
                 const viewportRight = viewportLeft + config.viewWidth;
-                const viewportBottom = viewportTop + config.viewHeight;
+                const viewportBottom = viewportTop + config.viewHeight - 1;
+                console.log(`${viewportLeft}, ${viewportRight}, ${viewportTop}, ${viewportBottom}; ${this.cellX}, ${this.cellY}`);
+                
                 function pointIsInView(x: integer, y: integer) {
                     return (
-                        (viewportLeft <= x && x <= viewportRight) &&
-                        (viewportTop <= y && y <= viewportBottom)
+                        (viewportLeft <= x && x < viewportRight) &&
+                        (viewportTop <= y && y < viewportBottom)
                     );
                 }
                 let inView = false;

@@ -30,6 +30,9 @@ config:
         - item: 2 # sword
           level: 0
           itemCount: 10
+        - item: 1 # pick
+          level: 2
+          itemCount: -1
   map:
     useSheetMap: true
     blockMap: # 0=air, 1=dirt, 2=ctone, 3=rock

@@ -311,13 +311,19 @@ config:
     - title: Game Design, Programming
       names:
         - Dickson Chui (@vicksonzero)
-    - title: Majority of Graphics; Art style
-      names:
-        - kenney.nl
     - title: Graphics
       names:
         - Dickson Chui
+    - title: Free Graphics
+        - Kenney (CC0, kenney.nl)
+    - title: Free Icons
+        - Kenney (CC0, kenney.nl)
+        - Quoting (CC BY 3.0, game-icons.net)
+        - Rémy Médard (Public Domain, thenounproject.com/catalarem)
     - title: Music / Sound
+      names:
+        - none yet
+    - title: Free Music / Sound
       names:
         - none yet
     - title: Items Design Ideas

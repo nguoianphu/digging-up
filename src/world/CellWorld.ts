@@ -114,7 +114,7 @@ export class CellWorld {
         const mapWidth = blockMap.reduce((acc, col) => Math.max(acc, col.length), 0);
         const mapHeight = blockMap.length;
         log(`loadWorld (width=${mapWidth}, height=${mapHeight})`);
-        
+
         if (mapWidth !== this.width || mapHeight !== this.height) {
             this.initMap(mapWidth, mapHeight);
         }
@@ -127,9 +127,8 @@ export class CellWorld {
                     if (typeof blockType === 'string' && (blockType.startsWith('$') || blockType.startsWith('!'))) {
                         const entityID = parseInt(blockType.slice(1), 10);
                         if (Number.isNaN(entityID)) throw new Error(`entityID isNaN: ${entityID}`);
-                        const entity = this.entityFactory(this.scene, config.entities[entityID], j, i);
-                        this.scene.view.add(entity);
-                        cell.addEntity(entity);
+                        this.entityFactory(this.scene, cell, config.entities[entityID], j, i);
+
                     } else if (typeof blockType === 'number') {
                         cell.addBlock(blockType);
                     }
@@ -175,20 +174,24 @@ export class CellWorld {
         });
     }
 
-    entityFactory(scene: Scene, entityDef: IEntityDef, cellX: number, cellY: number): Entity {
+    entityFactory(scene: Scene, cell: Cell, entityDef: IEntityDef, cellX: number, cellY: number): Entity {
+        let entity: Entity;
         switch (entityDef.type) {
             case 'drop': {
-                return new DropEntity(scene, this, entityDef as IDropEntityDef, cellX, cellY);
+                entity = new DropEntity(scene, this, entityDef as IDropEntityDef, cellX, cellY);
             } break;
             case 'chest': {
-                return new ChestEntity(scene, this, entityDef as IChestEntityDef, cellX, cellY);
+                entity = new ChestEntity(scene, this, entityDef as IChestEntityDef, cellX, cellY);
             } break;
             case 'enemy': {
-                return new EnemyEntity(scene, this, entityDef as IEnemyEntityDef, cellX, cellY);
+                entity = new EnemyEntity(scene, this, entityDef as IEnemyEntityDef, cellX, cellY);
             } break;
             default:
                 throw new Error(`unknown entityDef.type = ${entityDef.type}`)
         }
+        this.scene.view.add(entity);
+        cell.addEntity(entity);
+        return entity;
     }
 
 

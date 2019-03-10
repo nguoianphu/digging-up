@@ -59,7 +59,6 @@ export class MainScene extends Phaser.Scene implements GM {
     private moveKeys: IMoveKeys;
     private buttonContainer: Container;
     private placeBlockUI: PlaceBlockUI;
-    private dropItemUI: DropItemUI;
     public view: Container;
 
     private bg: Phaser.GameObjects.Image;
@@ -149,7 +148,6 @@ export class MainScene extends Phaser.Scene implements GM {
         this.createSlotButtons();
         this.createJoystick();
         this.createPlaceBlockUI();
-        this.createDropItemUI();
         this.createButtonBarUI(this.player);
 
         this.startGame();
@@ -438,13 +436,6 @@ export class MainScene extends Phaser.Scene implements GM {
         this.add.existing(this.placeBlockUI);
     }
 
-    createDropItemUI() {
-        this.dropItemUI = new DropItemUI(this);
-
-        // this.add.existing(this.dropItemUI);
-        // this.dropItemUI.disable();
-    }
-
     createButtonBarUI(player: Player) {
         this.buttonBar = new ButtonBar(this, 0, 1080, config.spriteWidth * config.viewWidth, 64);
         this.add.existing(this.buttonBar);
@@ -476,9 +467,10 @@ export class MainScene extends Phaser.Scene implements GM {
                 gameHeight / 2 - h / 2,
                 w, h
             ));
+            this.backpackPanel.setUp(this.player);
 
             // interact
-            const { backpackChanged } = await this.backpackPanel.interact(player.tempDrop);
+            const { backpackChanged } = await this.backpackPanel.interact();
 
             // tear down
             this.backpackPanel.destroy();

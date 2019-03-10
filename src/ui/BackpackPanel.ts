@@ -12,7 +12,10 @@ import { ItemTypes } from '../config/_ItemTypes';
 import * as Debug from 'debug'
 import { DraggableCardButton } from './DraggableCardButton';
 import { MainScene } from '../scenes/mainScene';
-import { DropEntity } from '../world/Entity';
+import { DropEntity, Entity } from '../world/Entity';
+import { Player } from '../world/Player';
+import { DropItemUI } from './DropItemUI';
+import { config, IDropEntityDef } from '../config/config';
 
 const log = Debug('digging-up:BackpackPanel:log');
 const warn = Debug('digging-up:BackpackPanel:warn');
@@ -29,8 +32,11 @@ export class BackpackPanel extends Phaser.GameObjects.Container {
     private buttonContainer: Container;
     private slotButtons: DraggableCardButton[];
     private buttonClose: Image;
+    private dropItemUI: DropItemUI;
 
     private resolve: null | ((a: interactionResult) => void) = null;
+    private player: Player;
+    backpackChanged: boolean = false;
 
     constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number) {
         super(scene, x, y);
@@ -45,6 +51,7 @@ export class BackpackPanel extends Phaser.GameObjects.Container {
         this.add(rect);
 
         this.createSlotButtons();
+        this.createDropItemUI();
         this.createCloseButton();
     };
 
@@ -63,10 +70,27 @@ export class BackpackPanel extends Phaser.GameObjects.Container {
                 0 + padding + buttonWidth / 2 + (buttonWidth + padding) * i, - padding + buttonHeight / 2,
                 buttonWidth, buttonHeight,
                 () => this.onSlotButtonPressed(i),
-                (droppedZoneID: number) => mainScene.onItemDragDropped(i, droppedZoneID)
+                (droppedZoneID: number) => {
+                    mainScene.onItemDragDropped(i, droppedZoneID);
+                    this.dropItemUI.enable(this.player.tempDrop);
+                    this.backpackChanged = true;
+                }
             ));
         });
         this.buttonContainer.add(this.slotButtons);
+    }
+
+
+    createDropItemUI() {
+        this.dropItemUI = new DropItemUI(this.scene as MainScene, (droppedZoneID: integer) => {
+            const mainScene = this.scene as MainScene;
+            mainScene.onItemDragDropped(-1, droppedZoneID);
+            this.dropItemUI.enable(this.player.tempDrop);
+            this.backpackChanged = true;
+        });
+
+        this.add(this.dropItemUI);
+        // this.dropItemUI.disable();
     }
 
     createCloseButton(): void {
@@ -81,13 +105,44 @@ export class BackpackPanel extends Phaser.GameObjects.Container {
         warn(`onSlotButtonPressed(${i}) for non-drag interface (later)`);
     }
 
-    async interact(tempDrop: DropEntity | null): Promise<interactionResult> {
+    setUp(player: Player) {
+        this.player = player;
+        this.player.on(Player.onItemUpdated, this.updateSlotButton, this);
+        if (player.tempDrop == null) {
+            const mainScene = this.scene as MainScene;
+            const tempDrop = mainScene.cellWorld.entityFactory(
+                this.scene,
+                mainScene.cellWorld.getCell(this.player.cellX, this.player.cellY),
+                {
+                    name: 'tempDrop',
+                    type: 'drop',
+                    drop: {
+                        item: ItemTypes.EMPTY,
+                        level: 0,
+                        itemCount: -1,
+                    }
+                } as IDropEntityDef,
+                this.player.cellX,
+                this.player.cellY
+            ) as DropEntity;
+            this.player.setTempSlot(tempDrop);
+        }
+        this.dropItemUI.enable(this.player.tempDrop);
+        this.slotButtons.forEach((_, slotID) => this.updateSlotButton(slotID));
+    }
+
+    updateSlotButton(slotID: integer) {
+        this.player.slots[slotID].updateButton(this.slotButtons[slotID]);
+    }
+
+    async interact(): Promise<interactionResult> {
         return new Promise((resolve, reject) => {
             this.resolve = (a: interactionResult) => resolve(a);
         });
     }
 
     close(isSilent = false): void {
+        this.player.off(Player.onItemUpdated, this.updateSlotButton, this, false);
         // do clean up
         if (!isSilent && this.resolve) this.resolve({ backpackChanged: false });
     }

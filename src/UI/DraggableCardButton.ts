@@ -42,8 +42,8 @@ export class DraggableCardButton extends Phaser.GameObjects.Container {
         this.iconContainer.setInteractive(new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h), Phaser.Geom.Rectangle.Contains);
         this.scene.input.setDraggable(this.iconContainer);
 
-        this.iconContainer.disableInteractive();
-        this.dropZone.disableInteractive();
+        // this.iconContainer.disableInteractive();
+        // this.dropZone.disableInteractive();
 
         let isDragging = false;
         // var zone = this.add.zone(500, 300, 300, 300).setRectangleDropZone(300, 300);

@@ -6,6 +6,7 @@ import { config, IBlockItemDef, IItemDef } from "../config/config";
 import { EventContext } from "../utils/Utils";
 import { CardButton } from "./CardButton";
 import { DropEntity } from "../world/Entity";
+import { DraggableCardButton } from "./DraggableCardButton";
 
 type Container = Phaser.GameObjects.Container;
 type Graphics = Phaser.GameObjects.Graphics;
@@ -18,17 +19,17 @@ export class DropItemUI extends Phaser.GameObjects.Container {
     button: CardButton;
     static onDirectionChosen = 'onDirectionChosen';
 
-    constructor(scene: MainScene) {
+    constructor(scene: MainScene, parentCallback:(droppedZoneID: number)=>void) {
         super(scene, 0, 0);
         this.scene = scene;
         const w = 128;
         const h = 128;
-        this.button = new CardButton(scene, -1, 560, 800, w, h,
+        this.button = new DraggableCardButton(scene, -1, 100, 100, w, h,
             () => {
                 //
             },
             (droppedZoneID: number) => {
-                this.scene.onItemDragDropped(-1, droppedZoneID);
+                parentCallback(droppedZoneID);
             }
         );
         this.add(this.button);

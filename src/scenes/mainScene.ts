@@ -1,7 +1,7 @@
 
 import { preload as _preload, setUpAnimations as _setUpAnimations } from '../preload';
 import { EventContext, waitForTimeout } from '../utils/Utils';
-import { CardButton } from '../UI/CardButton';
+import { CardButton } from '../ui/CardButton';
 import { ItemSlot } from '../world/Item';
 
 import { config, ISolidBlockDef, IMiningItemDef, IBlockItemDef, IItemSlot } from '../config/config';
@@ -9,10 +9,11 @@ import { GM } from '../GM';
 import { Player } from '../world/Player';
 import { CellWorld, Cell } from '../world/CellWorld';
 import { Entity, DropEntity, EnemyEntity, IQueueEntity } from '../world/Entity';
-import { PlaceBlockUI } from '../UI/PlaceBlockUI';
-import { DropItemUI } from '../UI/DropItemUI';
+import { PlaceBlockUI } from '../ui/PlaceBlockUI';
+import { DropItemUI } from '../ui/DropItemUI';
 import { ITrapEnemyDef } from '../config/_EnemyTypes';
 import { resolve } from 'url';
+import { ButtonBar, BackpackButtonTypes } from '../ui/ButtonBar';
 
 type Pointer = Phaser.Input.Pointer;
 type Container = Phaser.GameObjects.Container;
@@ -64,6 +65,7 @@ export class MainScene extends Phaser.Scene implements GM {
     private viewIsDirty: string[] = [];
     public canInput: boolean = false;
     public inputQueue = { directionX: 0, directionY: 0, slotInput: -1 };
+    public buttonBar: ButtonBar;
 
     constructor() {
         super({
@@ -132,7 +134,8 @@ export class MainScene extends Phaser.Scene implements GM {
         this.createSlotButtons();
         this.createJoystick();
         this.createPlaceBlockUI();
-        this.createDropItemUI(this.player);
+        this.createDropItemUI();
+        this.createButtonBarUI(this.player);
 
         this.startGame();
     }
@@ -424,22 +427,32 @@ export class MainScene extends Phaser.Scene implements GM {
         this.add.existing(this.placeBlockUI);
     }
 
-    createDropItemUI(player: Player) {
+    createDropItemUI() {
         this.dropItemUI = new DropItemUI(this);
 
+        // this.add.existing(this.dropItemUI);
+        // this.dropItemUI.disable();
+    }
+
+    createButtonBarUI(player: Player) {
+        this.buttonBar = new ButtonBar(this, 0, 1080, config.spriteWidth * config.viewWidth, 64);
+        this.add.existing(this.buttonBar);
+
+
         player.on(Player.onTempSlotUpdated, () => {
-            if (player.tempDrop) {
+            if (player.tempDrop != null) {
+                this.buttonBar.setBackpackButtonIcon(BackpackButtonTypes.PICK_ITEM);
                 // this.dropItemUI.enable(player.tempDrop);
                 // this.dropItemUI.button.toggleDrag(true);
                 // this.slotButtons.forEach((button) => button.toggleDrag(true));
             } else {
+                this.buttonBar.setBackpackButtonIcon(BackpackButtonTypes.NORMAL);
                 // this.dropItemUI.disable();
                 // this.dropItemUI.button.toggleDrag(false);
                 // this.slotButtons.forEach((button) => button.toggleDrag(false));
             }
         });
-        // this.add.existing(this.dropItemUI);
-        // this.dropItemUI.disable();
+
     }
 
     queueMovePlayer(dx: integer, dy: integer) {

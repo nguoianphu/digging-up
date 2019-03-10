@@ -1,6 +1,6 @@
 
 import { config } from '../config/config';
-import { CardButton } from '../UI/CardButton';
+import { CardButton } from '../ui/CardButton';
 import { capitalizeFirstLetter } from '../utils/Utils';
 import { ItemTypes } from '../config/_ItemTypes';
 

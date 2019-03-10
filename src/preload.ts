@@ -50,6 +50,8 @@ export function preload(this: Phaser.Scene) {
             endFrame: 24,
         }
     );
+    this.load.image('icon_backpack', './assets/dicksonmd/icon_backpack.png');
+    this.load.image('icon_take', './assets/dicksonmd/icon_take.png');
 }
 
 export function setUpAnimations(this: Phaser.Scene) {

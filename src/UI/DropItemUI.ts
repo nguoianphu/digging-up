@@ -3,7 +3,7 @@ import { MainScene } from "../scenes/mainScene";
 import { CellWorld, Cell } from "../world/CellWorld";
 import { Player } from "../world/Player";
 import { config, IBlockItemDef, IItemDef } from "../config/config";
-import { EventContext } from "../Utils";
+import { EventContext } from "../utils/Utils";
 import { CardButton } from "./CardButton";
 import { DropEntity } from "../world/Entity";
 

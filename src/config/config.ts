@@ -2,7 +2,7 @@ import { BlockTypes, BlockBehaviorTypes } from "./_BlockTypes";
 import { ItemTypes } from "./_ItemTypes";
 import { EnemyType, IEnemyDef } from "./_EnemyTypes";
 import { ISpriteDef } from "./_BasicTypes";
-import { Immutable } from "../Utils/ImmutableType";
+import { Immutable } from "../utils/ImmutableType";
 
 
 export type IConfig = Immutable<{

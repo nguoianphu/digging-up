@@ -1,7 +1,7 @@
 
 import { config } from '../config/config';
 import { CardButton } from '../UI/CardButton';
-import { capitalizeFirstLetter } from '../Utils';
+import { capitalizeFirstLetter } from '../utils/Utils';
 import { ItemTypes } from '../config/_ItemTypes';
 
 type Container = Phaser.GameObjects.Container;

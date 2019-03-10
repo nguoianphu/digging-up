@@ -1,5 +1,5 @@
 
-import { IMatterContactPoints } from "./Utils";
+import { IMatterContactPoints } from "./utils/Utils";
 
 
 

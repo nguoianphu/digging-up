@@ -1,6 +1,6 @@
 
 import { preload as _preload, setUpAnimations as _setUpAnimations } from '../preload';
-import { EventContext, waitForTimeout } from '../Utils';
+import { EventContext, waitForTimeout } from '../utils/Utils';
 import { CardButton } from '../UI/CardButton';
 import { ItemSlot } from '../world/Item';
 
@@ -429,17 +429,17 @@ export class MainScene extends Phaser.Scene implements GM {
 
         player.on(Player.onTempSlotUpdated, () => {
             if (player.tempDrop) {
-                this.dropItemUI.enable(player.tempDrop);
-                this.dropItemUI.button.toggleDrag(true);
-                this.slotButtons.forEach((button) => button.toggleDrag(true));
+                // this.dropItemUI.enable(player.tempDrop);
+                // this.dropItemUI.button.toggleDrag(true);
+                // this.slotButtons.forEach((button) => button.toggleDrag(true));
             } else {
-                this.dropItemUI.disable();
-                this.dropItemUI.button.toggleDrag(false);
-                this.slotButtons.forEach((button) => button.toggleDrag(false));
+                // this.dropItemUI.disable();
+                // this.dropItemUI.button.toggleDrag(false);
+                // this.slotButtons.forEach((button) => button.toggleDrag(false));
             }
         });
-        this.add.existing(this.dropItemUI);
-        this.dropItemUI.disable();
+        // this.add.existing(this.dropItemUI);
+        // this.dropItemUI.disable();
     }
 
     queueMovePlayer(dx: integer, dy: integer) {

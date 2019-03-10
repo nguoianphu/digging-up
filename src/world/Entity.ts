@@ -4,9 +4,14 @@ import { ItemSlot } from "./Item";
 import { CellWorld } from "./CellWorld";
 import { IEnemyDef, EntityBehavior, IFaceLeftRightEnemyDef } from "../config/_EnemyTypes";
 import { MainScene } from "../scenes/mainScene";
+import { Immutable } from "../utils/ImmutableType";
 
 
 export interface IQueueEntity {
+    oldCellX: integer;
+    oldCellY: integer;
+    cellX: integer;
+    cellY: integer;
     lastActionTurnID: integer;
     fatigue: integer;
     name: string;
@@ -132,7 +137,7 @@ export class EnemyEntity extends Entity implements IQueueEntity {
 
     public enemyName: string;
     public behaviors: EntityBehavior[];
-    public enemyDef: IEnemyDef;
+    public enemyDef: Immutable<IEnemyDef>;
 
     public lastActionTurnID = -1;
     public fatigue: integer = 0;
@@ -149,7 +154,7 @@ export class EnemyEntity extends Entity implements IQueueEntity {
         const { enemyName, behaviors, key, frame } = this.enemyDef;
 
         this.enemyName = enemyName;
-        this.behaviors = behaviors;
+        this.behaviors = [...behaviors];
         this.sprite = scene.make.sprite({
             x: config.spriteWidth / 2,
             y: config.spriteHeight / 2,
@@ -203,12 +208,33 @@ export class EnemyEntity extends Entity implements IQueueEntity {
                     this.updateFaceLeftRight(this.cellX - this.oldCellX);
                 }
 
+                const viewportLeft = scene.viewportX;
+                const viewportTop = scene.viewportY;
+                const viewportRight = viewportLeft + config.viewWidth;
+                const viewportBottom = viewportTop + config.viewHeight;
+                function pointIsInView(x: integer, y: integer) {
+                    return (
+                        (viewportLeft <= x && x <= viewportRight) &&
+                        (viewportTop <= y && y <= viewportBottom)
+                    );
+                }
+                let inView = false;
+                if (pointIsInView(this.cellX, this.cellY)) {
+                    console.log('inView A');
+                    inView = true;
+                }
+                if (pointIsInView(this.oldCellX, this.oldCellY)) {
+                    console.log('inView B');
+                    inView = true;
+                }
+
+
                 return new Promise((resolve) => {
                     scene.add.tween({
                         targets: [this],
                         x: config.spriteWidth * (this.cellX),
                         y: config.spriteHeight * (this.cellY),
-                        duration: config.movementTweenSpeed,
+                        duration: inView ? config.movementTweenSpeed : 1,
                         ease: 'Linear',
                         onStart: () => {
                             this.sprite.play('slime_walk');

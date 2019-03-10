@@ -20,6 +20,8 @@ export class ButtonBar extends Phaser.GameObjects.Container {
     private _backpackButton: BackpackButton;
     private padding = 8;
 
+    public static onBackpackButtonPressed = 'onBackpackButtonPressed';
+
     constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number) {
         super(scene, x, y);
         this.width = w;
@@ -32,7 +34,12 @@ export class ButtonBar extends Phaser.GameObjects.Container {
         rect.fillRect(0, 0, w, h);
         this.add(rect);
 
-        this._backpackButton = new BackpackButton(scene, w - this.padding - 128 / 2, h - 128 / 2 - this.padding);
+        this._backpackButton = new BackpackButton(
+            scene,
+            w - this.padding - 128 / 2,
+            h - 128 / 2 - this.padding,
+            () => this.emit(ButtonBar.onBackpackButtonPressed)
+        );
         this.add(this._backpackButton);
     };
 
@@ -55,7 +62,7 @@ export class BackpackButton extends Phaser.GameObjects.Container {
     bg: Graphics;
     icon: Image;
 
-    constructor(scene: Phaser.Scene, x: number, y: number) {
+    constructor(scene: Phaser.Scene, x: number, y: number, onClick: () => void) {
         super(scene, x, y);
 
         this.add(this.bg = scene.make.graphics({
@@ -68,12 +75,24 @@ export class BackpackButton extends Phaser.GameObjects.Container {
             x: 0, y: 0,
             key: 'icon_backpack',
             frame: null,
-        }))
+        }));
+
+        this.setUpClick(onClick);
+    }
+    setUpClick(onClick: () => void): void {
+        this.setInteractive(
+            new Phaser.Geom.Circle(0, 0, 64),
+            Phaser.Geom.Circle.Contains
+        );
+
+        this.on('pointerup', (pointer: Pointer) => {
+            onClick();
+        })
     }
 
     setIcon(iconType: BackpackButtonTypes) {
         log(`setIcon(${iconType})`);
-        
+
         switch (iconType) {
             case BackpackButtonTypes.NORMAL: {
                 this.icon.setTexture('icon_backpack');

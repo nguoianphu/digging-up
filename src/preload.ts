@@ -52,6 +52,9 @@ export function preload(this: Phaser.Scene) {
     );
     this.load.image('icon_backpack', './assets/dicksonmd/icon_backpack.png');
     this.load.image('icon_take', './assets/dicksonmd/icon_take.png');
+    this.load.image('button_close', './assets/kenney/onscreencontrols/Sprites/shadedLight/shadedLight47.png');
+
+
 }
 
 export function setUpAnimations(this: Phaser.Scene) {

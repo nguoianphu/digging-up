@@ -6,6 +6,7 @@ type Text = Phaser.GameObjects.Text;
 type Scene = Phaser.Scene;
 
 import { EventContext, defaultFont } from '../utils/Utils';
+import { CardButtonGraphics } from './CardButton';
 import * as Debug from 'debug'
 
 const log = Debug('digging-up:DraggableCardButton:log');
@@ -121,77 +122,5 @@ export class DraggableCardButton extends Phaser.GameObjects.Container {
             this.iconContainer.disableInteractive();
             this.dropZone.disableInteractive();
         }
-    }
-}
-
-
-
-export class CardButtonGraphics extends Phaser.GameObjects.Graphics {
-    fillRoundedRect: (x: number, y: number, w: number, h: number, r: number | { tl: number, tr: number, bl: number, br: number }) => this;
-    strokeRoundedRect: (x: number, y: number, w: number, h: number, r: number | { tl: number, tr: number, bl: number, br: number }) => this;
-
-    w: number; h: number;
-    isActive: boolean;
-    wasDown: boolean = false;
-    pressedCallback: () => void;
-
-    constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number, pressedCallback: () => void) {
-        super(scene, {
-            x, y,
-            fillStyle: { color: 0xfcfcf9, alpha: 1 },
-            lineStyle: { width: 5, color: 0xAAAAAA, alpha: 1 },
-        });
-
-        this.w = w;
-        this.h = h;
-
-        this.drawUpCard();
-
-        this.setInteractive(new Phaser.Geom.Rectangle(0, 0, w, h), Phaser.Geom.Rectangle.Contains);
-
-        this.wasDown = false;
-        this.on('pointerover', function (pointer: Pointer, localX: number, localY: number, evt: EventContext) {
-            log('pointerover');
-            this.drawOverCard();
-        });
-        this.on('pointerout', function (pointer: Pointer, evt: EventContext) {
-            // log('pointerout');
-            this.drawUpCard();
-        });
-        this.on('pointerdown', (pointer: Pointer, localX: number, localY: number, evt: EventContext) => {
-            // log('pointerdown');
-            this.drawDownCard();
-            this.wasDown = true;
-        });
-        this.on('pointerup', (pointer: Pointer, localX: number, localY: number, evt: EventContext) => {
-            // log('pointerup');
-            this.drawUpCard();
-            if (this.wasDown) {
-                pressedCallback();
-            }
-        });
-        this.scene.input.on('pointerup', () => {
-            this.wasDown = false;
-        })
-    }
-
-    drawUpCard() {
-        this.clear();
-        const bgColor = (this.isActive ? 0xfcfcf9 : 0xcccccc);
-        this.fillStyle(bgColor, 1);
-        this.strokeRoundedRect(0, 0, this.w, this.h, 4);
-        this.fillRoundedRect(0, 0, this.w, this.h, 4);
-    }
-    drawOverCard() {
-        this.clear();
-        this.fillStyle(0xFFFFAA, 1);
-        this.strokeRoundedRect(0, 0, this.w, this.h, 4);
-        this.fillRoundedRect(0, 0, this.w, this.h, 4);
-    }
-    drawDownCard() {
-        this.clear();
-        this.fillStyle(0xFFAAAA, 1);
-        this.strokeRoundedRect(0, 0, this.w, this.h, 4);
-        this.fillRoundedRect(0, 0, this.w, this.h, 4);
     }
 }

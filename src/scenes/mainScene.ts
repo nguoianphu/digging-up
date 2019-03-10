@@ -27,6 +27,7 @@ import { ButtonBar, BackpackButtonTypes } from '../ui/ButtonBar';
 import { CardButton } from '../ui/CardButton';
 import { DropItemUI } from '../ui/DropItemUI';
 import { PlaceBlockUI } from '../ui/PlaceBlockUI';
+import { BackpackPanel } from '../ui/BackpackPanel';
 
 type Pointer = Phaser.Input.Pointer;
 type Container = Phaser.GameObjects.Container;
@@ -72,13 +73,14 @@ export class MainScene extends Phaser.Scene implements GM {
     slotButtons: CardButton[];
     playerSprite: Sprite;
 
-    private resolveInput: () => void;
+    private resolveInput: null | (() => void) = null;
 
     public inputLock: string[] = [];
     private viewIsDirty: string[] = [];
     public canInput: boolean = false;
     public inputQueue = { directionX: 0, directionY: 0, slotInput: -1 };
     public buttonBar: ButtonBar;
+    private backpackPanel: BackpackPanel;
 
     constructor() {
         super({
@@ -165,15 +167,9 @@ export class MainScene extends Phaser.Scene implements GM {
         this.doActionLoop();
     }
 
-    update(time: number, delta: number): void {
-        // const playerNeedMove = (
-        //     this.player.oldCellX !== this.player.cellX ||
-        //     this.player.oldCellY !== this.player.cellY
-        // );
-        // if (!playerNeedMove) {
-        //     this.playerSprite.play('player_idle');
-        // }
-    }
+    // update(time: number, delta: number): void {
+
+    // }
 
     async resolveActions() {
         let isResolved = true;
@@ -229,7 +225,7 @@ export class MainScene extends Phaser.Scene implements GM {
         if (a.directionX != null) this.inputQueue.directionX = a.directionX;
         if (a.directionY != null) this.inputQueue.directionY = a.directionY;
         if (a.slotInput != null) this.inputQueue.slotInput = a.slotInput;
-        this.resolveInput();
+        if (this.resolveInput) this.resolveInput();
     }
 
     private makeActionQueue(): IQueueEntity[] {
@@ -278,7 +274,7 @@ export class MainScene extends Phaser.Scene implements GM {
 
     createSlotButtons() {
         const padding = 4;
-        const w = (this.sys.canvas.width - padding * 4) / 4;
+        const w = (this.sys.canvas.width - padding * 5) / 4;
         const h = 128;
 
         this.buttonContainer = this.add.container(0, this.sys.canvas.height - h);
@@ -457,17 +453,44 @@ export class MainScene extends Phaser.Scene implements GM {
         player.on(Player.onTempSlotUpdated, () => {
             if (player.tempDrop != null) {
                 this.buttonBar.setBackpackButtonIcon(BackpackButtonTypes.PICK_ITEM);
-                // this.dropItemUI.enable(player.tempDrop);
-                // this.dropItemUI.button.toggleDrag(true);
-                // this.slotButtons.forEach((button) => button.toggleDrag(true));
             } else {
                 this.buttonBar.setBackpackButtonIcon(BackpackButtonTypes.NORMAL);
-                // this.dropItemUI.disable();
-                // this.dropItemUI.button.toggleDrag(false);
-                // this.slotButtons.forEach((button) => button.toggleDrag(false));
             }
         });
+        this.buttonBar.on(ButtonBar.onBackpackButtonPressed, async () => {
+            if (!!this.backpackPanel) return;
+            const w = 800;
+            const h = 1000;
+            const gameWidth = this.sys.game.config.width as number;
+            const gameHeight = this.sys.game.config.height as number;
 
+            // set up
+            const dimBG = this.add.graphics({
+                x: 0, y: 0,
+                fillStyle: { color: 0x000000, alpha: 0.7 },
+            });
+            dimBG.fillRect(0, 0, gameWidth, gameHeight);
+            this.add.existing(this.backpackPanel = new BackpackPanel(
+                this,
+                gameWidth / 2 - w / 2,
+                gameHeight / 2 - h / 2,
+                w, h
+            ));
+
+            // interact
+            const { backpackChanged } = await this.backpackPanel.interact(player.tempDrop);
+
+            // tear down
+            this.backpackPanel.destroy();
+            dimBG.destroy();
+            if (backpackChanged) {
+                this.player.fatigue += 20;
+            }
+            this.backpackPanel = null;
+
+            // resolve
+            if (this.resolveInput) this.resolveInput();
+        });
     }
 
     queueMovePlayer(dx: integer, dy: integer) {

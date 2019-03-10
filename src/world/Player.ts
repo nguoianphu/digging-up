@@ -4,6 +4,11 @@ import { ItemTypes } from "../config/_ItemTypes";
 import { IDamage } from "../config/_BasicTypes";
 import { EntityBehavior } from "../config/_EnemyTypes";
 import { MainScene } from "../scenes/mainScene";
+import * as Debug from 'debug'
+
+const log = Debug('digging-up:CellWorld:log');
+// const warn = Debug('digging-up:CellWorld:warn');
+// warn.log = console.warn.bind(console);
 
 
 export class Player extends Phaser.Events.EventEmitter implements IQueueEntity {
@@ -38,7 +43,7 @@ export class Player extends Phaser.Events.EventEmitter implements IQueueEntity {
     // IQueueEntity
     async action(scene: MainScene, actionQueue: IQueueEntity[]) {
         scene.canInput = true;
-        console.log('scene.inputQueue', scene.inputQueue);
+        log('scene.inputQueue', scene.inputQueue);
         do {
             const inputQueue = scene.inputQueue;
             // scene.inputQueue = null;
@@ -219,7 +224,7 @@ export class Player extends Phaser.Events.EventEmitter implements IQueueEntity {
     takeDamage(damage: IDamage) {
         const { physical = 0 } = damage;
         this.hp -= physical;
-        console.log(`Player taken damage. hp=${this.hp}/${this.hpMax}`);
+        log(`Player taken damage. hp=${this.hp}/${this.hpMax}`);
 
     }
 }

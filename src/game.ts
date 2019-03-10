@@ -6,6 +6,11 @@ import "phaser";
 import { MainScene } from "./scenes/mainScene";
 
 import { config } from './config/config';
+import * as Debug from 'debug'
+
+const log = Debug('digging-up:game:log');
+// const warn = Debug('digging-up:game:warn');
+// warn.log = console.warn.bind(console);
 
 // main game configuration
 const phaserConfig: GameConfig = {
@@ -43,7 +48,7 @@ window.onload = () => {
         const hh = window.innerHeight / Number(phaserConfig.height);
 
         const min = Math.min(ww, hh);
-        console.log('handleSizeUpdate', window.innerWidth, ww, window.innerHeight, hh, min);
+        log('handleSizeUpdate', window.innerWidth, ww, window.innerHeight, hh, min);
 
         game.canvas.style.width = `${min * Number(phaserConfig.width)}px`;
         game.canvas.style.height = `${min * Number(phaserConfig.height)}px`;
@@ -52,7 +57,7 @@ window.onload = () => {
     if (!window.location.search.includes('video')) {
         window.addEventListener('resize', handleSizeUpdate);
 
-        console.log('init handleSizeUpdate');
+        log('init handleSizeUpdate');
         handleSizeUpdate();
     }
 };

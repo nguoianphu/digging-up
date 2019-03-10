@@ -1,19 +1,32 @@
 
+// Library
+import { resolve } from 'url';
+import * as Debug from 'debug'
+
+const log = Debug('digging-up:MainScene:log');
+const warn = Debug('digging-up:MainScene:warn');
+warn.log = console.warn.bind(console);
+
+log('hi node-debug');
+
+// system / configs
 import { preload as _preload, setUpAnimations as _setUpAnimations } from '../preload';
 import { EventContext, waitForTimeout } from '../utils/Utils';
-import { CardButton } from '../ui/CardButton';
-import { ItemSlot } from '../world/Item';
-
-import { config, ISolidBlockDef, IMiningItemDef, IBlockItemDef, IItemSlot } from '../config/config';
 import { GM } from '../GM';
-import { Player } from '../world/Player';
+import { config, ISolidBlockDef, IMiningItemDef, IBlockItemDef, IItemSlot } from '../config/config';
+import { ITrapEnemyDef } from '../config/_EnemyTypes';
+
+// world
 import { CellWorld, Cell } from '../world/CellWorld';
 import { Entity, DropEntity, EnemyEntity, IQueueEntity } from '../world/Entity';
-import { PlaceBlockUI } from '../ui/PlaceBlockUI';
-import { DropItemUI } from '../ui/DropItemUI';
-import { ITrapEnemyDef } from '../config/_EnemyTypes';
-import { resolve } from 'url';
+import { ItemSlot } from '../world/Item';
+import { Player } from '../world/Player';
+
+// ui
 import { ButtonBar, BackpackButtonTypes } from '../ui/ButtonBar';
+import { CardButton } from '../ui/CardButton';
+import { DropItemUI } from '../ui/DropItemUI';
+import { PlaceBlockUI } from '../ui/PlaceBlockUI';
 
 type Pointer = Phaser.Input.Pointer;
 type Container = Phaser.GameObjects.Container;
@@ -178,7 +191,7 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     async doViewUpdate() {
-        console.log(`doViewUpdate`);
+        log(`doViewUpdate`);
         // debugger;
         this.updateCells();
 
@@ -224,7 +237,7 @@ export class MainScene extends Phaser.Scene implements GM {
         const actionQueue: IQueueEntity[] = Entity.getActionQueue();
         actionQueue.push(this.player);
 
-        // console.log('actionQueue', actionQueue.slice());
+        // log('actionQueue', actionQueue.slice());
         actionQueue.sort((a, b) => {
             if (a.fatigue !== b.fatigue) return a.fatigue - b.fatigue;
             if (a.lastActionTurnID === -1) return -1;
@@ -241,12 +254,12 @@ export class MainScene extends Phaser.Scene implements GM {
             const fatigue = turnEntity.fatigue;
             if (fatigue > 0) {
                 actionQueue.forEach((entity) => entity.fatigue -= fatigue);
-                console.log(`actionQueue updated\n${actionQueue.map(e => `${e.fatigue}: ${e.name}`).join('\n')}`);
+                log(`actionQueue updated\n${actionQueue.map(e => `${e.fatigue}: ${e.name}`).join('\n')}`);
             }
 
             await waitForTimeout(10);
             // debugger;
-            console.log(`${turnEntity.name}'s turn`);
+            log(`${turnEntity.name}'s turn`);
 
             await turnEntity.action(this, actionQueue);
 
@@ -299,7 +312,7 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     onItemDragDropped(from: integer, to: integer) {
-        console.log('onItemDragDropped', from, to);
+        log('onItemDragDropped', from, to);
         if (from === -1) {
             const toSlot = this.player.slots[to];
 
@@ -343,7 +356,7 @@ export class MainScene extends Phaser.Scene implements GM {
         this.joyStickArea.setInteractive(new Phaser.Geom.Rectangle(0, 0, w, h), Phaser.Geom.Rectangle.Contains);
 
         this.joyStickArea.on('pointerdown', (pointer: Pointer, localX: number, localY: number, evt: EventContext) => {
-            // console.log('pointerdown', pointer, localX, localY, evt);
+            // log('pointerdown', pointer, localX, localY, evt);
             this.buttonContainer.setData('startX', localX);
             this.buttonContainer.setData('startY', localY);
             this.joyStickArea.clear();
@@ -352,7 +365,7 @@ export class MainScene extends Phaser.Scene implements GM {
 
         });
         this.input.on('pointerup', (pointer: Pointer, sprite: Sprite) => {
-            // console.log('pointerup', pointer, localX, localY, evt);
+            // log('pointerup', pointer, localX, localY, evt);
             const { upX, upY } = pointer;
             const startX = this.buttonContainer.getData('startX');
             const startY = this.buttonContainer.getData('startY');
@@ -375,7 +388,7 @@ export class MainScene extends Phaser.Scene implements GM {
 
             const fingerX = startX + Math.cos(dir * Math.PI / 2) * dist;
             const fingerY = startY + Math.sin(dir * Math.PI / 2) * dist;
-            // console.log('drag', dragX, dragY);
+            // log('drag', dragX, dragY);
             this.joyStickArea.clear();
             // this.joyStickArea.lineBetween(
             //     startX,
@@ -412,7 +425,7 @@ export class MainScene extends Phaser.Scene implements GM {
             const { x: dx, y: dy } = direction;
             const targetSlot = this.player.getActiveSlot();
             if (!targetSlot) {
-                console.warn('targetSlot not found');
+                warn('targetSlot not found');
             } else if (targetSlot.itemDef.types.includes('block')) {
                 const blockID = (<IBlockItemDef>targetSlot.itemDef).block.builds;
                 const cell = this.cellWorld.getCell(this.player.cellX + dx, this.player.cellY + dy);
@@ -465,7 +478,7 @@ export class MainScene extends Phaser.Scene implements GM {
     }
 
     movePlayer(dx: integer, dy: integer) {
-        // console.log(`movePlayer(${dx}, ${dy})`, new Error());
+        // log(`movePlayer(${dx}, ${dy})`, new Error());
 
         let newCellX = Phaser.Math.Clamp(this.player.cellX + dx, 0, this.cellWorld.width - 1);
         let newCellY = Phaser.Math.Clamp(this.player.cellY + dy, 0, this.cellWorld.height - 1);
@@ -490,7 +503,7 @@ export class MainScene extends Phaser.Scene implements GM {
             if (destCell.physicsType === 'solid') {
                 canMove = false;
                 if (dx !== 0 && dy === 0) {
-                    console.log('tryClimbStairs');
+                    log('tryClimbStairs');
                     const diagCell = this.cellWorld.getCell(newCellX, newCellY - 1);
                     const aboveCell = this.cellWorld.getCell(this.player.cellX, this.player.cellY - 1);
                     if (diagCell && diagCell.physicsType !== 'solid' && aboveCell && aboveCell.physicsType !== 'solid') {
@@ -571,7 +584,7 @@ export class MainScene extends Phaser.Scene implements GM {
         let worldChanged = false;
         const blockType = cell.getTopBlock();
         const blockDef = config.blocks[blockType];
-        console.log('tryDigCell', blockDef.type);
+        log('tryDigCell', blockDef.type);
         if (blockDef.type === 'solid') {
             // compare strength
             const blockStrength = (<ISolidBlockDef>blockDef).solid.strength;

@@ -5,6 +5,11 @@ import { CellWorld } from "./CellWorld";
 import { IEnemyDef, EntityBehavior, IFaceLeftRightEnemyDef } from "../config/_EnemyTypes";
 import { MainScene } from "../scenes/mainScene";
 import { Immutable } from "../utils/ImmutableType";
+import * as Debug from 'debug'
+
+const log = Debug('digging-up:Entity:log');
+// const warn = Debug('digging-up:Entity:warn');
+// warn.log = console.warn.bind(console);
 
 
 export interface IQueueEntity {
@@ -178,7 +183,7 @@ export class EnemyEntity extends Entity implements IQueueEntity {
     }
 
     async move(scene: MainScene, dx: integer, dy: integer) {
-        // console.log(`movePlayer(${dx}, ${dy})`, new Error());
+        // log(`movePlayer(${dx}, ${dy})`, new Error());
         this.oldCellX = this.cellX;
         this.oldCellY = this.cellY;
 
@@ -212,7 +217,7 @@ export class EnemyEntity extends Entity implements IQueueEntity {
                 const viewportTop = scene.viewportY;
                 const viewportRight = viewportLeft + config.viewWidth;
                 const viewportBottom = viewportTop + config.viewHeight - 1;
-                console.log(`${viewportLeft}, ${viewportRight}, ${viewportTop}, ${viewportBottom}; ${this.cellX}, ${this.cellY}`);
+                log(`${viewportLeft}, ${viewportRight}, ${viewportTop}, ${viewportBottom}; ${this.cellX}, ${this.cellY}`);
                 
                 function pointIsInView(x: integer, y: integer) {
                     return (
@@ -222,11 +227,11 @@ export class EnemyEntity extends Entity implements IQueueEntity {
                 }
                 let inView = false;
                 if (pointIsInView(this.cellX, this.cellY)) {
-                    console.log('inView A');
+                    log('inView A');
                     inView = true;
                 }
                 if (pointIsInView(this.oldCellX, this.oldCellY)) {
-                    console.log('inView B');
+                    log('inView B');
                     inView = true;
                 }
 

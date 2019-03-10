@@ -4,6 +4,11 @@ import { CellWorld, Cell } from "../world/CellWorld";
 import { Player } from "../world/Player";
 import { config, IBlockItemDef } from "../config/config";
 import { EventContext } from "../utils/Utils";
+import * as Debug from 'debug'
+
+const log = Debug('digging-up:CellWorld:log');
+// const warn = Debug('digging-up:CellWorld:warn');
+// warn.log = console.warn.bind(console);
 
 type Container = Phaser.GameObjects.Container;
 type Graphics = Phaser.GameObjects.Graphics;
@@ -52,11 +57,11 @@ export class PlaceBlockUI extends Phaser.GameObjects.Container {
             button.setInteractive(new Phaser.Geom.Rectangle(0, 0, w, h), Phaser.Geom.Rectangle.Contains);
 
             button.on('pointerdown', (pointer: Pointer, localX: number, localY: number, evt: EventContext) => {
-                // console.log('pointerdown', pointer, localX, localY, evt);
+                // log('pointerdown', pointer, localX, localY, evt);
                 wasDown = true;
             });
             button.on('pointerup', (pointer: Pointer, localX: number, localY: number, evt: EventContext) => {
-                // console.log('pointerdown', pointer, localX, localY, evt);
+                // log('pointerdown', pointer, localX, localY, evt);
 
                 if (wasDown) this.emit(PlaceBlockUI.onDirectionChosen, new Point(dx, dy));
             });

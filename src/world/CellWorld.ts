@@ -4,6 +4,11 @@ import { Scene } from "phaser";
 import { MainScene } from "../scenes/mainScene";
 import { BlockTypes } from "../config/_BlockTypes";
 import { Immutable } from "../utils/ImmutableType";
+import * as Debug from 'debug'
+
+const log = Debug('digging-up:CellWorld:log');
+// const warn = Debug('digging-up:CellWorld:warn');
+// warn.log = console.warn.bind(console);
 
 export class Cell {
     public name = 'cell';
@@ -108,7 +113,7 @@ export class CellWorld {
     loadWorld(blockMap: Immutable<(string | number)[][]>) {
         const mapWidth = blockMap.reduce((acc, col) => Math.max(acc, col.length), 0);
         const mapHeight = blockMap.length;
-        console.log(`loadWorld (width=${mapWidth}, height=${mapHeight})`);
+        log(`loadWorld (width=${mapWidth}, height=${mapHeight})`);
         
         if (mapWidth !== this.width || mapHeight !== this.height) {
             this.initMap(mapWidth, mapHeight);
@@ -117,7 +122,7 @@ export class CellWorld {
             .forEach((col, i) =>
                 col.forEach((cell, j) => {
                     const blockType = blockMap[i][j];
-                    // console.log(`(${i},${j}): ${blockType}`);
+                    // log(`(${i},${j}): ${blockType}`);
 
                     if (typeof blockType === 'string' && (blockType.startsWith('$') || blockType.startsWith('!'))) {
                         const entityID = parseInt(blockType.slice(1), 10);

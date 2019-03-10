@@ -6,8 +6,13 @@ type Text = Phaser.GameObjects.Text;
 type Scene = Phaser.Scene;
 
 import { EventContext, defaultFont } from '../utils/Utils';
+import * as Debug from 'debug'
 
-export class CardButton extends Phaser.GameObjects.Container {
+const log = Debug('digging-up:DraggableCardButton:log');
+// const warn = Debug('digging-up:DraggableCardButton:warn');
+// warn.log = console.warn.bind(console);
+
+export class DraggableCardButton extends Phaser.GameObjects.Container {
     cardButtonID: integer;
     iconContainer: Container;
     title: Text;
@@ -58,7 +63,7 @@ export class CardButton extends Phaser.GameObjects.Container {
         });
 
         this.iconContainer.on('drop', (pointer: Pointer, zone: Phaser.GameObjects.Zone) => {
-            console.log('dropped', zone.getData('zoneID'));
+            log('dropped', zone.getData('zoneID'));
 
             droppedCallback(zone.getData('zoneID'));
 
@@ -99,7 +104,7 @@ export class CardButton extends Phaser.GameObjects.Container {
     }
 
     updateButtonActive(isActive: boolean) {
-        // console.log('updateButtonActive', isActive);
+        // log('updateButtonActive', isActive);
 
         this.buttonGraphics.isActive = isActive;
         this.buttonGraphics.drawUpCard();
@@ -146,20 +151,20 @@ export class CardButtonGraphics extends Phaser.GameObjects.Graphics {
 
         this.wasDown = false;
         this.on('pointerover', function (pointer: Pointer, localX: number, localY: number, evt: EventContext) {
-            console.log('pointerover');
+            log('pointerover');
             this.drawOverCard();
         });
         this.on('pointerout', function (pointer: Pointer, evt: EventContext) {
-            // console.log('pointerout');
+            // log('pointerout');
             this.drawUpCard();
         });
         this.on('pointerdown', (pointer: Pointer, localX: number, localY: number, evt: EventContext) => {
-            // console.log('pointerdown');
+            // log('pointerdown');
             this.drawDownCard();
             this.wasDown = true;
         });
         this.on('pointerup', (pointer: Pointer, localX: number, localY: number, evt: EventContext) => {
-            // console.log('pointerup');
+            // log('pointerup');
             this.drawUpCard();
             if (this.wasDown) {
                 pressedCallback();

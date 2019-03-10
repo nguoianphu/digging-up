@@ -9,6 +9,11 @@ type Scene = Phaser.Scene;
 
 import { EventContext, defaultFont } from '../utils/Utils';
 import { ItemTypes } from '../config/_ItemTypes';
+import * as Debug from 'debug'
+
+const log = Debug('digging-up:ButtonBar:log');
+// const warn = Debug('digging-up:ButtonBar:warn');
+// warn.log = console.warn.bind(console);
 
 export class ButtonBar extends Phaser.GameObjects.Container {
 
@@ -67,7 +72,7 @@ export class BackpackButton extends Phaser.GameObjects.Container {
     }
 
     setIcon(iconType: BackpackButtonTypes) {
-        console.log(`setIcon(${iconType})`);
+        log(`setIcon(${iconType})`);
         
         switch (iconType) {
             case BackpackButtonTypes.NORMAL: {

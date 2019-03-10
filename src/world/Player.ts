@@ -44,10 +44,10 @@ export class Player extends Phaser.Events.EventEmitter implements IQueueEntity {
             // scene.inputQueue = null;
             if (inputQueue.directionX !== 0 || inputQueue.directionY !== 0) {
                 scene.canInput = false;
-                scene.movePlayer(inputQueue.directionX, inputQueue.directionY);
+                await scene.movePlayer(inputQueue.directionX, inputQueue.directionY);
             } else if (inputQueue.slotInput !== -1) {
                 scene.canInput = false;
-                scene.triggerSlot(inputQueue.slotInput);
+                await scene.triggerSlot(inputQueue.slotInput);
                 inputQueue.slotInput = -1;
             } else {
                 await scene.waitForInput();

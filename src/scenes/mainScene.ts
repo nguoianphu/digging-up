@@ -420,6 +420,8 @@ export class MainScene extends Phaser.Scene implements GM {
                 if (success) {
                     this.player.consumeItem(this.player.activeSlotID);
                     this.viewIsDirty.push('PlaceBlockUI.onDirectionChosen');
+
+                    this.updateCells();
                 }
             } else {
             }
@@ -508,6 +510,7 @@ export class MainScene extends Phaser.Scene implements GM {
         this.player.fatigue += 10;
         this.player.cellX = newCellX;
         this.player.cellY = newCellY;
+
     }
 
     checkEntityAndInteract(): boolean {

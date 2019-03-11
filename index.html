@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+  <script src="build/version.js"></script>
   <meta charset="UTF-8" />
   <meta name="author" content="Dickson Chui">
   <title>Digging-up | Dig for a treasure, but don't die before going back up!</title>
@@ -37,13 +38,17 @@
       </div>
     </div>
   </div>
-  <script src="build/bundle.js?v=17"></script>
+  <script>
+    const game_script = document.createElement('script');
+    game_script.setAttribute('src', `build/bundle.js?v=${game_version}`);
+    document.body.appendChild(game_script);
+  </script>
   <script>
     document.querySelector('.fullscreenButton').addEventListener('click', () => {
-        const fullscreenName = scene.sys.game.device.fullscreen.request;
-        if (fullscreenName) {
-            return document.querySelector('.container')[fullscreenName]();
-        }
+      const fullscreenName = scene.sys.game.device.fullscreen.request;
+      if (fullscreenName) {
+        return document.querySelector('.container')[fullscreenName]();
+      }
     });
   </script>
 </body>

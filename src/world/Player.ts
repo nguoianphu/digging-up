@@ -5,6 +5,7 @@ import { IDamage } from "../config/_BasicTypes";
 import { EntityBehavior } from "../config/_EnemyTypes";
 import { MainScene } from "../scenes/mainScene";
 import * as Debug from 'debug'
+import { IDropEntityDef } from "../config/config";
 
 const log = Debug('digging-up:CellWorld:log');
 // const warn = Debug('digging-up:CellWorld:warn');
@@ -12,6 +13,30 @@ const log = Debug('digging-up:CellWorld:log');
 
 
 export class Player extends Phaser.Events.EventEmitter implements IQueueEntity {
+    static createEmptySlot(scene: MainScene, cellX: integer, cellY: integer): DropEntity {
+        const mainScene = scene as MainScene;
+        const cell = mainScene.cellWorld.getCell(cellX, cellY);
+        if (cell == null) {
+            throw new Error(`cell(${cellX}, ${cellY}) not found`);
+        }
+        const tempDrop = mainScene.cellWorld.entityFactory(
+            scene,
+            cell,
+            {
+                name: 'tempDrop',
+                type: 'drop',
+                drop: {
+                    item: ItemTypes.EMPTY,
+                    level: 0,
+                    itemCount: -1,
+                }
+            } as IDropEntityDef,
+            cellX,
+            cellY
+        ) as DropEntity;
+
+        return tempDrop;
+    }
     // IQueueEntity
     public lastActionTurnID = -1;
     public fatigue: number = 0;

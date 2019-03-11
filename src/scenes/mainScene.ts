@@ -28,6 +28,7 @@ import { CardButton } from '../ui/CardButton';
 import { DropItemUI } from '../ui/DropItemUI';
 import { PlaceBlockUI } from '../ui/PlaceBlockUI';
 import { BackpackPanel } from '../ui/BackpackPanel';
+import { ItemTypes } from '../config/_ItemTypes';
 
 type Pointer = Phaser.Input.Pointer;
 type Container = Phaser.GameObjects.Container;
@@ -587,9 +588,16 @@ export class MainScene extends Phaser.Scene implements GM {
 
     checkTempSlotAndDrop() {
         const playerCell = this.cellWorld.getCell(this.player.cellX, this.player.cellY);
+        if (!playerCell) {
+            throw new Error(`playerCell(${this.player.cellX}, ${this.player.cellY}) not found`);
+        }
         if (this.player.tempDrop !== null) {
-            playerCell.addEntity(this.player.tempDrop);
-            this.player.tempDrop.setVisible(true);
+            if (this.player.tempDrop.slot.itemID !== ItemTypes.EMPTY) {
+                playerCell.addEntity(this.player.tempDrop);
+                this.player.tempDrop.setVisible(true);
+            } else {
+                playerCell.removeEntity(this.player.tempDrop);
+            }
             this.player.setTempSlot(null);
         }
     }

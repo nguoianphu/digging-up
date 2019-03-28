@@ -71,6 +71,7 @@ export class BackpackPanel extends Phaser.GameObjects.Container {
                 buttonWidth, buttonHeight,
                 () => this.onSlotButtonPressed(i),
                 (droppedZoneID: number) => {
+                    if (!this.player.tempDrop) throw new Error('tempDrop should not be null now');
                     mainScene.onItemDragDropped(i, droppedZoneID);
                     this.dropItemUI.enable(this.player.tempDrop);
                     this.backpackChanged = true;
@@ -84,6 +85,7 @@ export class BackpackPanel extends Phaser.GameObjects.Container {
     createDropItemUI() {
         this.dropItemUI = new DropItemUI(this.scene as MainScene, (droppedZoneID: integer) => {
             const mainScene = this.scene as MainScene;
+            if (!this.player.tempDrop) throw new Error('tempDrop should not be null now');
             mainScene.onItemDragDropped(-1, droppedZoneID);
             this.dropItemUI.enable(this.player.tempDrop);
             this.backpackChanged = true;
@@ -107,26 +109,8 @@ export class BackpackPanel extends Phaser.GameObjects.Container {
 
     setUp(player: Player) {
         this.player = player;
+        if (!this.player.tempDrop) throw new Error('tempDrop should not be null now');
         this.player.on(Player.onItemUpdated, this.updateSlotButton, this);
-        if (player.tempDrop == null) {
-            const mainScene = this.scene as MainScene;
-            const tempDrop = mainScene.cellWorld.entityFactory(
-                this.scene,
-                mainScene.cellWorld.getCell(this.player.cellX, this.player.cellY),
-                {
-                    name: 'tempDrop',
-                    type: 'drop',
-                    drop: {
-                        item: ItemTypes.EMPTY,
-                        level: 0,
-                        itemCount: -1,
-                    }
-                } as IDropEntityDef,
-                this.player.cellX,
-                this.player.cellY
-            ) as DropEntity;
-            this.player.setTempSlot(tempDrop);
-        }
         this.dropItemUI.enable(this.player.tempDrop);
         this.slotButtons.forEach((_, slotID) => this.updateSlotButton(slotID));
     }

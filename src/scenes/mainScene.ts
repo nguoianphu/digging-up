@@ -80,7 +80,7 @@ export class MainScene extends Phaser.Scene implements GM {
     public canInput: boolean = false;
     public inputQueue = { directionX: 0, directionY: 0, slotInput: -1 };
     public buttonBar: ButtonBar;
-    private backpackPanel: BackpackPanel;
+    private backpackPanel: BackpackPanel | null;
 
     constructor() {
         super({
@@ -312,6 +312,7 @@ export class MainScene extends Phaser.Scene implements GM {
             const toSlot = this.player.slots[to];
 
         }
+        if (!this.player.tempDrop) throw new Error('tempDrop should not be null now');
         const fromSlot: ItemSlot = (from === -1 ? this.player.tempDrop.slot : this.player.slots[from]);
         const toSlot: ItemSlot = (to === -1 ? this.player.tempDrop.slot : this.player.slots[to]);
         if (fromSlot === toSlot) {
@@ -468,6 +469,10 @@ export class MainScene extends Phaser.Scene implements GM {
                 gameHeight / 2 - h / 2,
                 w, h
             ));
+            if (this.player.tempDrop == null) {
+                const tempDrop = Player.createEmptySlot(this, this.player.cellX, this.player.cellY);
+                this.player.setTempSlot(tempDrop);
+            }
             this.backpackPanel.setUp(this.player);
 
             // interact
@@ -683,7 +688,7 @@ export class MainScene extends Phaser.Scene implements GM {
 
         const activeSlot = this.player.getActiveSlot();;
         if (this.placeBlockUI && activeSlot && activeSlot.itemDef.types.includes('block')) {
-            this.placeBlockUI.updateButtons(this.player, this.viewportX, this.viewportY, this.player.getActiveSlot());
+            this.placeBlockUI.updateButtons(this.player, this.viewportX, this.viewportY, activeSlot);
         }
     }
     updateCell(cell: Cell, xx: number, yy: number): void {

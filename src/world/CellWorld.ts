@@ -160,11 +160,11 @@ export class CellWorld {
         return map[0].map((col, i) => map.map(row => row[i]));
     }
 
-    getCell(x: integer, y: integer): Cell | null {
+    getCell(x: integer, y: integer): Cell {
         const i = y;
         const j = x;
-        if (!this.map[i]) return null;
-        if (!this.map[i][j]) return null;
+        if (!this.map[i]) throw new Error(`Cell not found (x=${x}, y=${y})`);
+        if (!this.map[i][j]) throw new Error(`Cell not found (x=${x}, y=${y})`);
         return this.map[i][j];
     }
 
